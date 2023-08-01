@@ -1,18 +1,8 @@
 import { useEffect, useRef, useState, ChangeEvent } from 'react'
+import './style.css'
+import { ReactPhotoEditorProps } from './interface';
 
-interface ImageEditorProps {
-    file: File | undefined
-    allowColorEditing?: boolean
-    allowRotate?: boolean
-    allowFlip?: boolean
-    allowZoom?: boolean
-    downloadOnSave?: boolean
-    open?: boolean
-    onClose?: () => void
-    onSaveImage: (image: File) => void
-}
-
-export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, allowColorEditing, allowFlip, allowRotate, allowZoom, downloadOnSave, open, onClose }) => {
+export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({ file, onSaveImage, allowColorEditing, allowFlip, allowRotate, allowZoom, downloadOnSave, open, onClose }) => {
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [imageSrc, setImageSrc] = useState('');
@@ -25,7 +15,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
     const [flipHorizontal, setFlipHorizontal] = useState(false);
     const [flipVertical, setFlipVertical] = useState(false);
     const [zoom, setZoom] = useState(1);
-    const [showRotate, setShowRotate] = useState(false);
     const [showColorSetting, setShowColorSettings] = useState(false);
 
     useEffect(() => {
@@ -33,7 +22,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
             const fileSrc = URL.createObjectURL(file);
             setImageSrc(fileSrc);
             setImageName(file.name);
+            return () => {
+                URL.revokeObjectURL(fileSrc);
+            }
         }
+
     }, [file, open])
 
     useEffect(() => {
@@ -124,14 +117,22 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
                     }
                 }
             });
-
+            setBrightnessValue(100);
+            setContrastValue(100);
+            setSaturateValue(100);
+            setGrayscaleValue(0);
+            setRotate(0);
+            setFlipHorizontal(false);
+            setFlipVertical(false);
+            setZoom(1);
+            
         }
     };
     return (
         <>
             {open ? (
                 <>
-                    <div className="justify-center items-center flex overflow-auto fixed inset-0 z-50">
+                    <div data-testid="photo-editor-main" className="photo-editor-main justify-center items-center flex overflow-auto fixed inset-0 z-50">
                         <div className="">
                             {/*content*/}
                             <div className="relative rounded-lg shadow-lg w-[40rem] max-sm:w-[22rem] bg-white h-[40rem] dark:bg-slate-800">
@@ -156,6 +157,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
                                                     hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700
                                                     dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                                         onClick={() => saveImage()}
+                                        data-testid="save-button"
                                     >
                                         Save
                                     </button>
@@ -163,7 +165,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
                                 {/*body*/}
                                 <div className="p-6">
                                     <div className="flex flex-col">
-                                        <canvas className='max-w-lg max-h-[22rem] w-full object-fit mx-auto' id="canvas" ref={canvasRef} />
+                                        <canvas className='canvas max-w-lg max-h-[22rem] w-full object-fit mx-auto' data-testid="image-editor-canvas" id="canvas" ref={canvasRef} />
                                         <div className='flex flex-row m-1'>
 
                                             <div className='flex flex-col basis-11/12 gap-2 mt-4 bottom-24 max-sm:w-72 w-11/12 absolute '>
@@ -187,7 +189,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
                                                 </div>}
                                                 {allowColorEditing &&
                                                     <>
-                                                        <div className='flex flex-row justify-between items-center '>
+                                                        <div className='flex flex-row justify-between items-center' data-testid="color-editing">
                                                             <label className="text-xs font-medium text-gray-900 dark:text-white">Brightness: </label>
                                                             <input
                                                                 id="default-range"
@@ -267,30 +269,31 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ file, onSaveImage, all
 
 
                                         </div>
-                                        <div className='flex justify-center '>
+                                        <div className='flex justify-center'>
 
                                             <div className='mb-1 absolute bottom-0 mt-2'>
-                                                {allowColorEditing && <button className='mx-1  focus:ring-4 rounded-md p-1' onClick={() => { setShowColorSettings(!showColorSetting); setShowRotate(false) }}>
+                                                {allowColorEditing && <button data-testid="color-editing-btn" className='mx-1  focus:ring-4 rounded-md p-1' onClick={() => { setShowColorSettings(!showColorSetting) }}>
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sliders-horizontal dark:stroke-slate-200"><line x1="21" x2="14" y1="4" y2="4" /><line x1="10" x2="3" y1="4" y2="4" /><line x1="21" x2="12" y1="12" y2="12" /><line x1="8" x2="3" y1="12" y2="12" /><line x1="21" x2="16" y1="20" y2="20" /><line x1="12" x2="3" y1="20" y2="20" /><line x1="14" x2="14" y1="2" y2="6" /><line x1="8" x2="8" y1="10" y2="14" /><line x1="16" x2="16" y1="18" y2="22" /></svg>
                                                 </button>}
                                                 {allowFlip &&
-                                                    <>
+                                                    <div className='inline-block' data-testid="flip-btns">
                                                         <button className='mx-1 focus:ring-4 rounded-md p-1' onClick={() => setFlipHorizontal(!flipHorizontal)}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flip-horizontal dark:stroke-slate-200"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3" /><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" /><path d="M12 20v2" /><path d="M12 14v2" /><path d="M12 8v2" /><path d="M12 2v2" /></svg>
                                                         </button>
                                                         <button className='mx-1 focus:ring-4 rounded-md p-1' onClick={() => setFlipVertical(!flipVertical)}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flip-vertical dark:stroke-slate-200"><path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3" /><path d="M4 12H2" /><path d="M10 12H8" /><path d="M16 12h-2" /><path d="M22 12h-2" /></svg>
                                                         </button>
-                                                    </>
+                                                    </div>
                                                 }
-                                                {allowZoom && <>
-                                                    <button className='mx-1 focus:ring-4 rounded-md p-1' onClick={handleZoomIn}>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in dark:stroke-slate-200"><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /><line x1="11" x2="11" y1="8" y2="14" /><line x1="8" x2="14" y1="11" y2="11" /></svg>
-                                                    </button>
-                                                    <button className='mx-1 focus:ring-4 rounded-md p-1' onClick={handleZoomOut}>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-out dark:stroke-slate-200"><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /><line x1="8" x2="14" y1="11" y2="11" /></svg>
-                                                    </button>
-                                                </>
+                                                {allowZoom &&
+                                                    <div className='inline-block' data-testid="zoom-btns">
+                                                        <button data-testid="zoom-in" className='mx-1 focus:ring-4 rounded-md p-1' onClick={handleZoomIn}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in dark:stroke-slate-200"><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /><line x1="11" x2="11" y1="8" y2="14" /><line x1="8" x2="14" y1="11" y2="11" /></svg>
+                                                        </button>
+                                                        <button data-testid="zoom-out" className='mx-1 focus:ring-4 rounded-md p-1' onClick={handleZoomOut}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-out dark:stroke-slate-200"><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /><line x1="8" x2="14" y1="11" y2="11" /></svg>
+                                                        </button>
+                                                    </div>
                                                 }
                                             </div>
                                         </div>

@@ -9,7 +9,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
     allowFlip = true,
     allowRotate = true,
     allowZoom = true,
-    downloadOnSave = true,
+    downloadOnSave,
     open,
     onClose
 }) => {

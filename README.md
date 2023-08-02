@@ -1,8 +1,6 @@
 
 # react-photo-editor
 
-  
-
 React component for image editing with options to set **brightness**, **contrast**, **saturation**, **grayscale**. Also with features to **rotation**, **flip** and **zoom** the photo.
 
 ## Installation 
@@ -11,6 +9,9 @@ React component for image editing with options to set **brightness**, **contrast
 ```js 
 npm install react-files-preview
 ```
+
+### [Stackblitz - Check It Live](https://stackblitz.com/edit/react-flcdhq?file=src%2FApp.js,package.json)
+
 ## Usage
 ```ts
 import { ReactPhotoEditor } from 'react-photo-editor'

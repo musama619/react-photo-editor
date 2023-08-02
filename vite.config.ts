@@ -19,6 +19,7 @@ export default defineConfig({
             entry: path.resolve(__dirname, "src/index.ts"),
             name: "ReactPhotoEditor",
             fileName: (format) => `react-photo-editor.${format}.js`,
+            formats: ["es"]
         },
         rollupOptions: {
             external: ["react", "react-dom"],

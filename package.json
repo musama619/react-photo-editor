@@ -1,46 +1,46 @@
 {
   "name": "react-photo-editor",
   "description": "React component for image editing with filters, rotate, zoom and more.",
-  "private": true,
-  "version": "0.0.0",
+  "private": false,
+  "version": "0.0.1-alpha.1",
   "author": "Usama Chouhan (musama619)",
-	"license": "MIT",
+  "license": "MIT",
   "type": "module",
   "keywords": [
-		"photo editor",
-		"image editor",
-		"react photo editor",
-		"react image editor",
-		"image editing",
-		"react-photo-editor",
-		"react-image-editor",
-		"react component",
-		"react pic editor",
-		"react",
-		"reactjs"
-	],
+    "photo editor",
+    "image editor",
+    "react photo editor",
+    "react image editor",
+    "image editing",
+    "react-photo-editor",
+    "react-image-editor",
+    "react component",
+    "react pic editor",
+    "react",
+    "reactjs"
+  ],
   "main": "./dist/react-photo-editor.umd.js",
-	"module": "./dist/react-photo-editor.es.js",
-	"types": "./dist/index.d.ts",
+  "module": "./dist/react-photo-editor.es.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-		".": {
-			"import": "./dist/react-photo-editor.es.js",
-			"require": "./dist/react-photo-editor.umd.js",
-			"types": "./dist/index.d.ts"
-		},
-		"./dist/style.css": {
-			"import": "./dist/style.css",
-			"require": "./dist/style.css"
-		}
-	},
+    ".": {
+      "import": "./dist/react-photo-editor.es.js",
+      "require": "./dist/react-photo-editor.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dist/style.css": {
+      "import": "./dist/style.css",
+      "require": "./dist/style.css"
+    }
+  },
   "publishConfig": {
-		"access": "public"
-	},
+    "access": "public"
+  },
   "files": [
-		"dist",
-		"README.md",
-		"style.css"
-	],
+    "dist",
+    "README.md",
+    "style.css"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -73,7 +73,7 @@
     "tailwindcss": "^3.3.3",
     "typescript": "^5.0.2",
     "vite": "^4.4.0",
-    "vite-plugin-dts": "^3.3.1",
+    "vite-plugin-dts": "^3.4.0",
     "vitest": "^0.33.0"
   }
 }

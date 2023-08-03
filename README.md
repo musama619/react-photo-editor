@@ -2,7 +2,7 @@
 
 # react-photo-editor
 
-React component for image editing with options to set **brightness**, **contrast**, **saturation**, **grayscale**. Also with features to **rotation**, **flip** and **zoom** the photo.
+React component for image editing with options to set **brightness**, **contrast**, **saturation**, and **grayscale**. Also with features to **rotate**, **flip** and **zoom** the photo.
 
 ## Installation 
 

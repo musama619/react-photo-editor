@@ -1,3 +1,4 @@
+![react-photo-editor](https://github.com/musama619/react-photo-editor/blob/main/react-photo-editor.png)
 
 # react-photo-editor
 

@@ -8,15 +8,12 @@ export default defineConfig({
     plugins: [
         react(),
         dts({
-            outDir: ["dist"],
-            staticImport: true,
             rollupTypes: true,
-            insertTypesEntry: true,
         }),
     ],
     build: {
         lib: {
-            entry: path.resolve(__dirname, "src/index.ts"),
+            entry: path.resolve(__dirname, "src/index.tsx"),
             name: "ReactPhotoEditor",
             fileName: (format) => `react-photo-editor.${format}.js`,
             formats: ["es"]
@@ -29,5 +26,6 @@ export default defineConfig({
                 },
             },
         },
+        minify: true,
     },
 });

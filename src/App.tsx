@@ -38,7 +38,7 @@ function App() {
         allowRotate={true}
         allowZoom={true}
         onSaveImage={handleSaveImage}
-        downloadOnSave={false}
+        downloadOnSave={true}
       />
     </div>
   )

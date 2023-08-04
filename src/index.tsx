@@ -1,2 +1,1 @@
-export { ReactPhotoEditor } from './components/ReactPhotoEditor'
-export type { ReactPhotoEditorProps } from "./components/interface";
+export { ReactPhotoEditor } from './components/ReactPhotoEditor';

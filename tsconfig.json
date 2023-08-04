@@ -14,10 +14,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "declaration": true,
-    "typeRoots": ["./dist/index.d.ts", "node_modules/@types"],
     "noEmit": true,
     "jsx": "react-jsx",
   },
-  "include": ["src", "./index.ts"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

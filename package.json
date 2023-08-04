@@ -2,14 +2,14 @@
   "name": "react-photo-editor",
   "description": "React component for image editing with filters, rotate, zoom and more.",
   "private": false,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Usama Chouhan (musama619)",
   "license": "MIT",
   "type": "module",
   "repository": {
-		"type": "git",
-		"url": "https://github.com/musama619/react-photo-editor.git"
-	},
+    "type": "git",
+    "url": "https://github.com/musama619/react-photo-editor.git"
+  },
   "keywords": [
     "photo editor",
     "image editor",
@@ -27,8 +27,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/react-photo-editor.es.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/react-photo-editor.es.js"
     },
     "./dist/style.css": {
       "import": "./dist/style.css"

@@ -2,7 +2,7 @@
   "name": "react-photo-editor",
   "description": "React component for image editing with filters, rotate, zoom and more.",
   "private": false,
-  "version": "1.1.1",
+  "version": "1.2.0",
   "author": "Usama Chouhan (musama619)",
   "license": "MIT",
   "type": "module",
@@ -37,6 +37,10 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

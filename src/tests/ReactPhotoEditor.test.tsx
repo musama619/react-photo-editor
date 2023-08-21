@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { describe, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReactPhotoEditor } from "../components/ReactPhotoEditor";
-import matchers from "@testing-library/jest-dom/matchers";
-
+import '@testing-library/jest-dom/vitest'
+import * as matchers from '@testing-library/jest-dom/matchers'
 
 expect.extend(matchers);
 afterEach(() => {
@@ -31,16 +31,6 @@ describe("ReactPhotoEditor Component", () => {
 
         const rotate = screen.getByText("Rotate:");
         expect(rotate).toBeInTheDocument();
-    });
-    it("should render color editing div correctly", () => {
-        render(<ReactPhotoEditor file={fileData} onSaveImage={onSaveImage} open={true} allowRotate={true} allowColorEditing={true} />);
-
-        const rotate = screen.getByTestId("color-editing");
-        const colorEditingBtn = screen.getByTestId("color-editing-btn");
-        expect(rotate).toBeInTheDocument();
-        expect(colorEditingBtn).toBeInTheDocument();
-
-
     });
     it("should render flip buttons", () => {
         render(

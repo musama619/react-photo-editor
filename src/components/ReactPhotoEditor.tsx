@@ -32,20 +32,26 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 	const [offsetX, setOffsetX] = useState(0);
 	const [offsetY, setOffsetY] = useState(0);
 
-	const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+	const handlePointerDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
 		setIsDragging(true);
-		setPanStart({ x: event.clientX - offsetX, y: event.clientY - offsetY });
+		const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
+		const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
+		setPanStart({ x: initialX, y: initialY });
 	};
 
-	const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+	const handlePointerMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
 		if (isDragging) {
 			event.preventDefault();
-			setOffsetX(event.clientX - panStart!.x);
-			setOffsetY(event.clientY - panStart!.y);
+
+			const offsetXDelta = event.clientX - panStart!.x;
+			const offsetYDelta = event.clientY - panStart!.y;
+
+			setOffsetX(flipHorizontal ? -offsetXDelta : offsetXDelta);
+			setOffsetY(flipVertical ? -offsetYDelta : offsetYDelta);
 		}
 	};
 
-	const handleMouseUp = () => {
+	const handlePointerUp = () => {
 		setIsDragging(false);
 	};
 
@@ -243,8 +249,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 						onClose();
 					}
 				}
+				resetImage();
 			});
-			resetImage();
 		}
 	};
 
@@ -282,10 +288,10 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 										data-testid='image-editor-canvas'
 										id='canvas'
 										ref={canvasRef}
-										onMouseDown={handleMouseDown}
-										onMouseMove={handleMouseMove}
-										onMouseUp={handleMouseUp}
-										onMouseLeave={handleMouseUp}
+										onPointerDown={handlePointerDown}
+										onPointerMove={handlePointerMove}
+										onPointerUp={handlePointerUp}
+										onPointerLeave={handlePointerUp}
 										onWheel={handleWheel}
 									/>
 									<div className='items-center flex m-1 flex-col'>

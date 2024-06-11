@@ -6,14 +6,18 @@ React component for image editing with options to set **brightness**, **contrast
 
 ## Installation 
 
-
+### npm
 ```js 
-npm install react-files-preview
+npm install react-photo-editor
+```
+### yarn
+```js 
+yarn add react-photo-editor
 ```
 
 ### [Stackblitz - Check It Live](https://stackblitz.com/edit/react-flcdhq?file=src%2FApp.js,package.json)
 
-## Usage
+## Basic Usage
 ```ts
 import { ReactPhotoEditor } from 'react-photo-editor'
 import 'react-photo-editor/dist/style.css'
@@ -67,6 +71,21 @@ function App() {
 }
 
 export default App
+```
+
+## Usage with Tailwind CSS
+If your project uses Tailwind CSS, you don’t need to import the CSS file directly. Instead, add the following path to the content array in your tailwind.config.js file:
+```js
+module.exports = {
+  content: [
+    './src/**/*.{js,jsx,ts,tsx}',
+    './node_modules/react-photo-editor/dist/*.js', // Add this line
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
 ```
 
 ## Options

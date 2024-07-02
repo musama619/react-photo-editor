@@ -146,3 +146,18 @@ export  interface  ReactPhotoEditorProps {
     onSaveImage: (image:  File) =>  void,
  }
 ```
+
+## Contributing
+
+Contributions to `react-photo-editor` are welcome! If you have any issues, feature requests, or improvements, please open an issue or submit a pull request on the [GitHub repository](https://github.com/musama619/react-photo-editor). Your feedback and support are highly appreciated!
+
+### Reporting Issues
+
+If you encounter any problems while using the library, please open an issue on GitHub. Provide as much detail as possible, including steps to reproduce the issue and any relevant code or screenshots.
+
+### Feature Requests
+
+Have an idea for a new feature? Please open an issue with a detailed description of the feature you'd like to see, and why it would be useful.
+
+Thank you for your interest in contributing to `react-photo-editor`!
+

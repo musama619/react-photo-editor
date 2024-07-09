@@ -13,6 +13,12 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 	downloadOnSave,
 	open,
 	onClose,
+	modalHeight,
+	modalWidth,
+	canvasHeight,
+	canvasWidth,
+	maxCanvasHeight,
+	maxCanvasWidth
 }) => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const [imageSrc, setImageSrc] = useState('');
@@ -233,6 +239,20 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 	const saveImage = () => {
 		const canvas = canvasRef.current;
 		if (canvas) {
+			const fileExtension = (imageName.split('.').pop() || '').toLowerCase();
+			let mimeType;
+			switch (fileExtension) {
+				case 'jpg':
+				case 'jpeg':
+					mimeType = 'image/jpeg';
+					break;
+				case 'png':
+					mimeType = 'image/png';
+					break;
+				default:
+					mimeType = 'image/png';
+			}
+
 			canvas.toBlob((blob) => {
 				if (blob) {
 					const editedFile = new File([blob], imageName, { type: blob.type });
@@ -250,7 +270,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 					}
 				}
 				resetImage();
-			});
+			}, mimeType);
 		}
 	};
 
@@ -268,7 +288,14 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 						data-testid='photo-editor-main'
 						className='photo-editor-main justify-center items-center flex overflow-auto fixed inset-0 z-50'
 					>
-						<div className='relative rounded-lg shadow-lg w-[40rem] max-sm:w-[22rem] bg-white h-[38rem] dark:bg-[#1e1e1e]'>
+						<div
+							style={{
+								height: modalHeight ?? '38rem',
+								width: modalWidth ?? '40rem'
+							}}
+							id='photo-editor-modal'
+							className='relative rounded-lg shadow-lg max-sm:w-[22rem] bg-white dark:bg-[#1e1e1e]'
+						>
 							<div className='flex justify-end p-2 rounded-t'>
 								<button className={modalHeaderButtonClasses} onClick={closeEditor}>
 									Close
@@ -284,7 +311,13 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 							<div className='p-2'>
 								<div className='flex flex-col'>
 									<canvas
-										className={`canvas border dark:border-gray-700 max-w-xl max-h-[22rem] w-full object-fit mx-auto ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+										style={{
+											width: canvasWidth ?? 'auto',
+											height: canvasHeight ?? 'auto',
+											maxHeight: maxCanvasHeight ?? '22rem',
+											maxWidth: maxCanvasWidth ?? '36rem'
+										}}
+										className={`canvas border dark:border-gray-700 object-fit mx-auto ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 										data-testid='image-editor-canvas'
 										id='canvas'
 										ref={canvasRef}
@@ -293,6 +326,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 										onPointerUp={handlePointerUp}
 										onPointerLeave={handlePointerUp}
 										onWheel={handleWheel}
+										width={typeof canvasWidth === 'number' ? canvasWidth : undefined}
+										height={typeof canvasHeight === 'number' ? canvasHeight : undefined}
 									/>
 									<div className='items-center flex m-1 flex-col'>
 										<div className='flex flex-col bottom-12 gap-1 mt-4 max-sm:w-72 w-11/12 absolute '>

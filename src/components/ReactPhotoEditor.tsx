@@ -297,12 +297,17 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 							className='relative rounded-lg shadow-lg max-sm:w-[22rem] bg-white dark:bg-[#1e1e1e]'
 						>
 							<div className='flex justify-end p-2 rounded-t'>
-								<button className={modalHeaderButtonClasses} onClick={closeEditor}>
+								<button
+									className={modalHeaderButtonClasses}
+									onClick={closeEditor}
+									type='button'
+								>
 									Close
 								</button>
 								<button
 									className={modalHeaderButtonClasses}
 									onClick={() => saveImage()}
+									type='button'
 									data-testid='save-button'
 								>
 									Save
@@ -377,6 +382,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 												className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 												onClick={resetImage}
 												aria-label='Reset photo'
+												type='button'
 											>
 												<svg
 													xmlns='http://www.w3.org/2000/svg'
@@ -399,6 +405,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 													<button
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={() => setFlipHorizontal(!flipHorizontal)}
+														type='button'
 														title='Flip photo horizontally'
 														aria-label='Flip photo horizontally'
 													>
@@ -425,6 +432,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 													<button
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={() => setFlipVertical(!flipVertical)}
+														type='button'
 														title='Flip photo vertically'
 														aria-label='Flip photo vertically'
 													>
@@ -454,6 +462,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 												<div className='inline-block' data-testid='zoom-btns'>
 													<button
 														data-testid='zoom-in'
+														type='button'
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={handleZoomIn}
 														title='Zoom in'
@@ -479,6 +488,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 													</button>
 													<button
 														data-testid='zoom-out'
+														type='button'
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={handleZoomOut}
 														title='Zoom out'

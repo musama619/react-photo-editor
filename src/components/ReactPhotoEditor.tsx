@@ -18,7 +18,21 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 	canvasHeight,
 	canvasWidth,
 	maxCanvasHeight,
-	maxCanvasWidth
+	maxCanvasWidth,
+	labels = {
+		close: 'Close',
+		save: 'Save',
+		rotate: 'Rotate',
+		brightness: 'Brightness',
+		contrast: 'Contrast',
+		saturate: 'Saturate',
+		grayscale: 'Grayscale',
+		reset: 'Reset photo',
+		flipHorizontal: 'Flip photo horizontally',
+		flipVertical: 'Flip photo vertically',
+		zoomIn: 'Zoom in',
+		zoomOut: 'Zoom out'
+	}
 }) => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const [imageSrc, setImageSrc] = useState('');
@@ -101,6 +115,12 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		const canvas = canvasRef.current;
 		const context = canvas?.getContext('2d');
 		const image = new Image();
+
+		if (!(imageSrc.startsWith('blob:'))) {
+			console.error('Invalid image source');
+			return;
+		}
+
 		image.src = imageSrc;
 		image.onload = () => {
 			if (canvas && context) {
@@ -165,7 +185,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 
 	const renderInputs = [
 		{
-			name: 'rotate',
+			name: labels.rotate,
 			value: rotate,
 			setValue: setRotate,
 			min: -180,
@@ -176,7 +196,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 			hide: !allowRotate,
 		},
 		{
-			name: 'brightness',
+			name: labels.brightness,
 			value: brightnessValue,
 			setValue: setBrightnessValue,
 			min: 0,
@@ -187,7 +207,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 			hide: !allowColorEditing,
 		},
 		{
-			name: 'contrast',
+			name: labels.contrast,
 			value: contrastValue,
 			setValue: setContrastValue,
 			min: 0,
@@ -198,7 +218,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 			hide: !allowColorEditing,
 		},
 		{
-			name: 'saturate',
+			name: labels.saturate,
 			value: saturateValue,
 			setValue: setSaturateValue,
 			min: 0,
@@ -209,7 +229,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 			hide: !allowColorEditing,
 		},
 		{
-			name: 'grayscale',
+			name: labels.grayscale,
 			value: grayscaleValue,
 			setValue: setGrayscaleValue,
 			min: 0,
@@ -302,7 +322,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 									onClick={closeEditor}
 									type='button'
 								>
-									Close
+									{labels.close}
 								</button>
 								<button
 									className={modalHeaderButtonClasses}
@@ -310,7 +330,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 									type='button'
 									data-testid='save-button'
 								>
-									Save
+									{labels.save}
 								</button>
 							</div>
 							<div className='p-2'>
@@ -378,10 +398,10 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 									<div className='flex justify-center'>
 										<div className='mb-1 absolute bottom-0 mt-2'>
 											<button
-												title='Reset photo'
+												title={labels.reset}
 												className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 												onClick={resetImage}
-												aria-label='Reset photo'
+												aria-label={labels.reset}
 												type='button'
 											>
 												<svg
@@ -406,8 +426,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={() => setFlipHorizontal(!flipHorizontal)}
 														type='button'
-														title='Flip photo horizontally'
-														aria-label='Flip photo horizontally'
+														title={labels.flipHorizontal}
+														aria-label={labels.flipHorizontal}
 													>
 														<svg
 															xmlns='http://www.w3.org/2000/svg'
@@ -433,8 +453,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={() => setFlipVertical(!flipVertical)}
 														type='button'
-														title='Flip photo vertically'
-														aria-label='Flip photo vertically'
+														title={labels.flipVertical}
+														aria-label={labels.flipVertical}
 													>
 														<svg
 															xmlns='http://www.w3.org/2000/svg'
@@ -465,8 +485,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 														type='button'
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={handleZoomIn}
-														title='Zoom in'
-														aria-label='Zoom in'
+														title={labels.zoomIn}
+														aria-label={labels.zoomIn}
 													>
 														<svg
 															xmlns='http://www.w3.org/2000/svg'
@@ -491,8 +511,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 														type='button'
 														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
 														onClick={handleZoomOut}
-														title='Zoom out'
-														aria-label='Zoom out'
+														title={labels.zoomOut}
+														aria-label={labels.zoomOut}
 													>
 														<svg
 															xmlns='http://www.w3.org/2000/svg'

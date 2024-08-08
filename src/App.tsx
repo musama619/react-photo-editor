@@ -24,11 +24,26 @@ function App() {
     }
   }
 
+  const translationsFr = {
+    close: 'fermer',
+    save: 'sauvegarder',
+    rotate: 'faire pivoter',
+    brightness: 'luminosité',
+    contrast: 'contraste',
+    saturate: 'saturer',
+    grayscale: 'niveaux de gris',
+    reset: 'réinitialiser',
+    flipHorizontal: 'retourner horizontalement',
+    flipVertical: 'retourner verticalement',
+    zoomIn: 'zoomer',
+    zoomOut: 'dézoomer',
+  };
+
+
   return (
     <div>
       <input type="file" onChange={(e) => setFileData(e)} multiple={false} />
       <button className='bg-gray-200 p-2 rounded-md ml-2' onClick={() => showModalHandler()}>Edit</button>
-      <button className='bg-gray-200 p-2 rounded-md ml-2'>Download</button>
       <ReactPhotoEditor
         open={showModal}
         onClose={hideModal}
@@ -39,6 +54,7 @@ function App() {
         allowZoom={true}
         onSaveImage={handleSaveImage}
         downloadOnSave={true}
+      // labels={translationsFr}
       />
     </div>
   )

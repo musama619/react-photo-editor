@@ -1,0 +1,346 @@
+import { useState, useEffect, useRef } from 'react';
+
+/**
+ * Parameters for the usePhotoEditor hook.
+ */
+interface UsePhotoEditorParams {
+  /**
+   * The image file to be edited.
+   */
+  file?: File;
+
+  /**
+   * Initial brightness level (default: 100).
+   */
+  defaultBrightness?: number;
+
+  /**
+   * Initial contrast level (default: 100).
+   */
+  defaultContrast?: number;
+
+  /**
+   * Initial saturation level (default: 100).
+   */
+  defaultSaturate?: number;
+
+  /**
+   * Initial grayscale level (default: 0).
+   */
+  defaultGrayscale?: number;
+
+  /**
+   * Flip the image horizontally (default: false).
+   */
+  defaultFlipHorizontal?: boolean;
+
+  /**
+   * Flip the image vertically (default: false).
+   */
+  defaultFlipVertical?: boolean;
+
+  /**
+   * Initial zoom level (default: 1).
+   */
+  defaultZoom?: number;
+
+  /**
+   * Initial rotation angle in degrees (default: 0).
+   */
+  defaultRotate?: number;
+}
+
+/**
+ * Custom hook for handling photo editing within a canvas.
+ * 
+ * @param {UsePhotoEditorParams} params - Configuration parameters for the hook.
+ * @returns {Object} - Returns state and functions for managing image editing.
+ */
+export const usePhotoEditor = ({
+  file,
+  defaultBrightness = 100,
+  defaultContrast = 100,
+  defaultSaturate = 100,
+  defaultGrayscale = 0,
+  defaultFlipHorizontal = false,
+  defaultFlipVertical = false,
+  defaultZoom = 1,
+  defaultRotate = 0,
+}: UsePhotoEditorParams) => {
+
+  // Ref to the canvas element where the image will be drawn.
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // State to hold the source of the image.
+  const [imageSrc, setImageSrc] = useState<string>('');
+
+  // State to hold the name of the image file.
+  const [imageName, setImageName] = useState<string>('');
+
+  // State variables for various image transformations.
+  const [brightness, setBrightness] = useState(defaultBrightness);
+  const [contrast, setContrast] = useState(defaultContrast);
+  const [saturate, setSaturate] = useState(defaultSaturate);
+  const [grayscale, setGrayscale] = useState(defaultGrayscale);
+  const [rotate, setRotate] = useState(defaultRotate);
+  const [flipHorizontal, setFlipHorizontal] = useState(defaultFlipHorizontal);
+  const [flipVertical, setFlipVertical] = useState(defaultFlipVertical);
+  const [zoom, setZoom] = useState(defaultZoom);
+
+  // State variables for handling drag-and-drop panning.
+  const [isDragging, setIsDragging] = useState(false);
+  const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
+
+  // Effect to update the image source when the file changes.
+  useEffect(() => {
+    if (file) {
+      const fileSrc = URL.createObjectURL(file);
+      setImageSrc(fileSrc);
+      setImageName(file.name);
+
+      // Clean up the object URL when the component unmounts or file changes.
+      return () => {
+        URL.revokeObjectURL(fileSrc);
+      };
+    }
+  }, [file]);
+
+  // Effect to apply transformations and filters whenever relevant state changes.
+  useEffect(() => {
+    applyFilter();
+  }, [file, imageSrc, rotate, flipHorizontal, flipVertical, zoom, brightness, contrast, saturate, grayscale, offsetX, offsetY]);
+
+  /**
+   * Applies the selected filters and transformations to the image on the canvas.
+   */
+  const applyFilter = () => {
+    if (!imageSrc) return;
+
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    const image = new Image();
+
+    if (!imageSrc.startsWith('blob:')) {
+      console.error('Invalid image source');
+      return;
+    }
+
+    image.src = imageSrc;
+    image.onload = () => {
+      if (canvas && context) {
+        const zoomedWidth = image.width * zoom;
+        const zoomedHeight = image.height * zoom;
+        const translateX = (image.width - zoomedWidth) / 2;
+        const translateY = (image.height - zoomedHeight) / 2;
+
+        // Set canvas dimensions to match the image.
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        // Clear the canvas before drawing the updated image.
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Apply filters and transformations.
+        context.filter = getFilterString();
+        context.save();
+
+        if (rotate) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          context.translate(centerX, centerY);
+          context.rotate((rotate * Math.PI) / 180);
+          context.translate(-centerX, -centerY);
+        }
+        if (flipHorizontal) {
+          context.translate(canvas.width, 0);
+          context.scale(-1, 1);
+        }
+        if (flipVertical) {
+          context.translate(0, canvas.height);
+          context.scale(1, -1);
+        }
+
+        context.translate(translateX + offsetX, translateY + offsetY);
+        context.scale(zoom, zoom);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        context.restore();
+
+      }
+    };
+  };
+
+  /**
+ * Generates a file from the canvas content.
+ * @returns {Promise<File | null>} A promise that resolves with the edited file or null if the canvas is not available.
+ */
+  const generateEditedFile = (): Promise<File | null> => {
+    return new Promise((resolve, reject) => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        resolve(null);
+        return;
+      }
+
+      const fileExtension = (imageName.split('.').pop() || '').toLowerCase();
+      let mimeType;
+      switch (fileExtension) {
+        case 'jpg':
+        case 'jpeg':
+          mimeType = 'image/jpeg';
+          break;
+        case 'png':
+          mimeType = 'image/png';
+          break;
+        default:
+          mimeType = 'image/png';
+      }
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const newFile = new File([blob], imageName, { type: blob.type });
+          resolve(newFile);
+        } else {
+          resolve(null);
+        }
+      }, mimeType);
+    });
+  };
+
+  const downloadImage = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const link = document.createElement('a');
+      link.download = imageName;
+      link.href = canvas.toDataURL(file?.type);
+      link.click();
+    }
+  };
+
+  /**
+   * Generates a string representing the current filter settings.
+   * 
+   * @returns {string} - A CSS filter string.
+   */
+  const getFilterString = (): string => {
+    return `brightness(${brightness}%) contrast(${contrast}%) grayscale(${grayscale}%) saturate(${saturate}%)`;
+  };
+
+  /**
+   * Handles the zoom-in action.
+   */
+  const handleZoomIn = () => {
+    setZoom((prevZoom) => prevZoom + 0.1);
+  };
+
+  /**
+   * Handles the zoom-out action.
+   */
+  const handleZoomOut = () => {
+    setZoom((prevZoom) => Math.max(prevZoom - 0.1, 0.1));
+  };
+
+  /**
+   * Handles the pointer down event for initiating drag-and-drop panning.
+   */
+  const handlePointerDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDragging(true);
+    const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
+    const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
+    setPanStart({ x: initialX, y: initialY });
+  };
+
+  /**
+   * Handles the pointer move event for updating the image position during drag-and-drop panning.
+   */
+  const handlePointerMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDragging && panStart) {
+      event.preventDefault();
+
+      const offsetXDelta = event.clientX - panStart.x;
+      const offsetYDelta = event.clientY - panStart.y;
+
+      setOffsetX(flipHorizontal ? -offsetXDelta : offsetXDelta);
+      setOffsetY(flipVertical ? -offsetYDelta : offsetYDelta);
+    }
+  };
+
+  /**
+   * Handles the pointer up event for ending the drag-and-drop panning.
+   */
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
+
+  /**
+   * Handles the wheel event for zooming in and out.
+   */
+  const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
+    if (event.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
+  };
+
+  /**
+   * Resets the filters and styles to its original state with the default settings.
+   */
+  const resetFilters = () => {
+    setBrightness(defaultBrightness);
+    setContrast(defaultContrast);
+    setSaturate(defaultSaturate);
+    setGrayscale(defaultGrayscale);
+    setRotate(defaultRotate);
+    setFlipHorizontal(defaultFlipHorizontal);
+    setFlipVertical(defaultFlipVertical);
+    setZoom(defaultZoom);
+    setOffsetX(0);
+    setOffsetY(0);
+    setPanStart(null);
+    setIsDragging(false);
+  };
+
+
+  // Expose the necessary state and handlers for external use.
+  return {
+    canvasRef,
+    imageSrc,
+    brightness,
+    contrast,
+    saturate,
+    grayscale,
+    rotate,
+    flipHorizontal,
+    flipVertical,
+    zoom,
+    isDragging,
+    panStart,
+    offsetX,
+    offsetY,
+    setBrightness,
+    setContrast,
+    setSaturate,
+    setGrayscale,
+    setRotate,
+    setFlipHorizontal,
+    setFlipVertical,
+    setZoom,
+    setIsDragging,
+    setPanStart,
+    setOffsetX,
+    setOffsetY,
+    handleZoomIn,
+    handleZoomOut,
+    handlePointerDown,
+    handlePointerUp,
+    handlePointerMove,
+    handleWheel,
+    downloadImage,
+    generateEditedFile,
+    resetFilters,
+    applyFilter,
+  };
+};

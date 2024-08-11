@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, ChangeEvent } from 'react';
 import { ReactPhotoEditorProps } from './interface';
 import './style.css';
+import { usePhotoEditor } from '../hooks/usePhotoEditor';
 const modalHeaderButtonClasses =
 	'text-gray-900 bg-white border border-gray-300 ml-2 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-full text-sm px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700';
 export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
@@ -34,135 +35,44 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		zoomOut: 'Zoom out'
 	}
 }) => {
-	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const [imageSrc, setImageSrc] = useState('');
-	const [imageName, setImageName] = useState('');
-	const [brightnessValue, setBrightnessValue] = useState(100);
-	const [contrastValue, setContrastValue] = useState(100);
-	const [saturateValue, setSaturateValue] = useState(100);
-	const [grayscaleValue, setGrayscaleValue] = useState(0);
-	const [rotate, setRotate] = useState(0);
-	const [flipHorizontal, setFlipHorizontal] = useState(false);
-	const [flipVertical, setFlipVertical] = useState(false);
-	const [zoom, setZoom] = useState(1);
 
-	const [isDragging, setIsDragging] = useState(false);
+	if (!file) {
+		return null;
+	}
 
-	const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
-	const [offsetX, setOffsetX] = useState(0);
-	const [offsetY, setOffsetY] = useState(0);
-
-	const handlePointerDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
-		setIsDragging(true);
-		const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
-		const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
-		setPanStart({ x: initialX, y: initialY });
-	};
-
-	const handlePointerMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-		if (isDragging) {
-			event.preventDefault();
-
-			const offsetXDelta = event.clientX - panStart!.x;
-			const offsetYDelta = event.clientY - panStart!.y;
-
-			setOffsetX(flipHorizontal ? -offsetXDelta : offsetXDelta);
-			setOffsetY(flipVertical ? -offsetYDelta : offsetYDelta);
-		}
-	};
-
-	const handlePointerUp = () => {
-		setIsDragging(false);
-	};
-
-	const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
-		if (event.deltaY < 0) {
-			handleZoomIn();
-		} else {
-			handleZoomOut();
-		}
-	};
-
-	useEffect(() => {
-		if (file) {
-			const fileSrc = URL.createObjectURL(file);
-			setImageSrc(fileSrc);
-			setImageName(file.name);
-			return () => {
-				URL.revokeObjectURL(fileSrc);
-			};
-		}
-	}, [file, open]);
-
-	useEffect(() => {
-		applyFilter();
-	}, [
-		file,
-		imageSrc,
+	const {
+		canvasRef,
+		brightness,
+		setBrightness,
+		contrast,
+		setContrast,
+		saturate,
+		setSaturate,
+		grayscale,
+		setGrayscale,
 		rotate,
+		setRotate,
 		flipHorizontal,
+		setFlipHorizontal,
 		flipVertical,
-		zoom,
-		brightnessValue,
-		contrastValue,
-		saturateValue,
-		grayscaleValue,
-		offsetX,
-		offsetY,
-	]);
+		setFlipVertical,
+		isDragging,
+		handlePointerDown,
+		handlePointerUp,
+		handlePointerMove,
+		handleWheel,
+		handleZoomIn,
+		handleZoomOut,
+		resetFilters,
+		downloadImage,
+		generateEditedFile,
+		applyFilter
+	} = usePhotoEditor({ file });
 
-	const applyFilter = () => {
-		const canvas = canvasRef.current;
-		const context = canvas?.getContext('2d');
-		const image = new Image();
-
-		if (!(imageSrc.startsWith('blob:'))) {
-			console.error('Invalid image source');
-			return;
-		}
-
-		image.src = imageSrc;
-		image.onload = () => {
-			if (canvas && context) {
-				const zoomedWidth = image.width * zoom;
-				const zoomedHeight = image.height * zoom;
-				const translateX = (image.width - zoomedWidth) / 2;
-				const translateY = (image.height - zoomedHeight) / 2;
-				canvas.width = image.width;
-				canvas.height = image.height;
-				context.filter = getFilterString();
-				context.save();
-				if (rotate) {
-					const centerX = canvas.width / 2;
-					const centerY = canvas.height / 2;
-					context.translate(centerX, centerY);
-					context.rotate((rotate * Math.PI) / 180);
-					context.translate(-centerX, -centerY);
-				}
-				if (flipHorizontal) {
-					context.translate(canvas.width, 0);
-					context.scale(-1, 1);
-				}
-				if (flipVertical) {
-					context.translate(0, canvas.height);
-					context.scale(1, -1);
-				}
-				context.translate(translateX, translateY);
-
-				context.translate(offsetX, offsetY);
-
-				context.scale(zoom, zoom);
-				context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-				context.restore();
-			}
-		};
-	};
-
-	const getFilterString = () => {
-		return `brightness(${brightnessValue}%) contrast(${contrastValue}%) grayscale(${grayscaleValue}%) saturate(${saturateValue}%)`;
-	};
-
+	useEffect(() => {
+		resetFilters();
+		applyFilter();
+	}, [open]);
 	const handleInputChange = (
 		event: ChangeEvent<HTMLInputElement>,
 		setValue: React.Dispatch<React.SetStateAction<number>>,
@@ -173,14 +83,6 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		if (!isNaN(value) && value >= min && value <= max) {
 			setValue(value);
 		}
-	};
-
-	const handleZoomIn = () => {
-		setZoom((prevZoom) => prevZoom + 0.1);
-	};
-
-	const handleZoomOut = () => {
-		setZoom((prevZoom) => Math.max(prevZoom - 0.1, 0.1));
 	};
 
 	const renderInputs = [
@@ -197,8 +99,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		},
 		{
 			name: labels.brightness,
-			value: brightnessValue,
-			setValue: setBrightnessValue,
+			value: brightness,
+			setValue: setBrightness,
 			min: 0,
 			max: 200,
 			type: 'range',
@@ -208,8 +110,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		},
 		{
 			name: labels.contrast,
-			value: contrastValue,
-			setValue: setContrastValue,
+			value: contrast,
+			setValue: setContrast,
 			min: 0,
 			max: 200,
 			type: 'range',
@@ -219,8 +121,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		},
 		{
 			name: labels.saturate,
-			value: saturateValue,
-			setValue: setSaturateValue,
+			value: saturate,
+			setValue: setSaturate,
 			min: 0,
 			max: 200,
 			type: 'range',
@@ -230,8 +132,8 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		},
 		{
 			name: labels.grayscale,
-			value: grayscaleValue,
-			setValue: setGrayscaleValue,
+			value: grayscale,
+			setValue: setGrayscale,
 			min: 0,
 			max: 100,
 			type: 'range',
@@ -241,65 +143,24 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		},
 	];
 
-	const resetImage = () => {
-		setBrightnessValue(100);
-		setContrastValue(100);
-		setSaturateValue(100);
-		setGrayscaleValue(0);
-		setRotate(0);
-		setFlipHorizontal(false);
-		setFlipVertical(false);
-		setZoom(1);
-		setOffsetX(0);
-		setOffsetY(0);
-		setPanStart(null);
-		setIsDragging(false);
-	};
-
-	const saveImage = () => {
-		const canvas = canvasRef.current;
-		if (canvas) {
-			const fileExtension = (imageName.split('.').pop() || '').toLowerCase();
-			let mimeType;
-			switch (fileExtension) {
-				case 'jpg':
-				case 'jpeg':
-					mimeType = 'image/jpeg';
-					break;
-				case 'png':
-					mimeType = 'image/png';
-					break;
-				default:
-					mimeType = 'image/png';
-			}
-
-			canvas.toBlob((blob) => {
-				if (blob) {
-					const editedFile = new File([blob], imageName, { type: blob.type });
-					if (downloadOnSave) {
-						const objectUrl = URL.createObjectURL(blob);
-						const linkElement = document.createElement('a');
-						linkElement.download = `${imageName}`;
-						linkElement.href = objectUrl;
-						linkElement.click();
-						URL.revokeObjectURL(objectUrl);
-					}
-					onSaveImage(editedFile);
-					if (onClose) {
-						onClose();
-					}
-				}
-				resetImage();
-			}, mimeType);
-		}
-	};
-
 	const closeEditor = () => {
-		resetImage();
+		resetFilters();
 		if (onClose) {
 			onClose();
 		}
 	};
+
+	const saveImage = async () => {
+		if (downloadOnSave) {
+			downloadImage();
+		}
+		const editedFile = await generateEditedFile();
+		editedFile && onSaveImage(editedFile);
+		if (onClose) {
+			onClose();
+		}
+	};
+
 	return (
 		<>
 			{open && (
@@ -400,7 +261,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 											<button
 												title={labels.reset}
 												className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
-												onClick={resetImage}
+												onClick={resetFilters}
 												aria-label={labels.reset}
 												type='button'
 											>

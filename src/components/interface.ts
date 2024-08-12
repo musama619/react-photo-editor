@@ -1,3 +1,18 @@
+export interface ReactPhotoEditorTranslations {
+	close: string;
+	save: string;
+	rotate: string;
+	brightness: string;
+	contrast: string;
+	saturate: string;
+	grayscale: string;
+	reset: string;
+	flipHorizontal: string;
+	flipVertical: string;
+	zoomIn: string;
+	zoomOut: string;
+}
+
 export interface ReactPhotoEditorProps {
 	/**
 	 * The input image file to be edited.
@@ -92,4 +107,17 @@ export interface ReactPhotoEditorProps {
 	 * @default '36rem'
 	 */
 	maxCanvasWidth?: number | string;
+
+	/**
+	 * Custom labels or text options for various elements in the photo editor.
+	 * Use this to override default text for buttons, tooltips, etc.
+	 *
+	 * Example:
+	 * labels: {
+	 *     close: 'Exit',
+	 *     save: 'Apply Changes',
+	 *     rotate: 'Turn',
+	 * }
+	 */
+	labels?: ReactPhotoEditorTranslations;
 }

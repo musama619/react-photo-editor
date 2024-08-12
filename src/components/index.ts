@@ -1,1 +1,1 @@
-export { ReactPhotoEditor } from './ReactPhotoEditor'
+export { ReactPhotoEditor } from './ReactPhotoEditor';

@@ -2,7 +2,7 @@
 	"name": "react-photo-editor",
 	"description": "React component for image editing with filters, rotate, zoom and more.",
 	"private": false,
-	"version": "2.1.3",
+	"version": "2.1.4-rc.3",
 	"author": "Usama Chouhan (musama619)",
 	"license": "MIT",
 	"type": "module",

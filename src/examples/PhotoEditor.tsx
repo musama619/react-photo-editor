@@ -19,7 +19,7 @@ const PhotoEditor = () => {
         setFile(editedFile);
     };
 
-    const setFileData = (e: React.ChangeEvent<HTMLInputElement> | null) => {
+    const setFileData = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e?.target?.files && e.target.files.length > 0) {
             setFile(e.target.files[0])
         }

@@ -71,6 +71,9 @@ export const usePhotoEditor = ({
   // Ref to the canvas element where the image will be drawn.
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Create the image object using a ref
+  const imgRef = useRef(new Image());
+
   // State to hold the source of the image.
   const [imageSrc, setImageSrc] = useState<string>('');
 
@@ -120,24 +123,21 @@ export const usePhotoEditor = ({
 
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
-    const image = new Image();
 
-    if (!imageSrc.startsWith('blob:')) {
-      console.error('Invalid image source');
-      return;
-    }
+    const imgElement = imgRef.current;
+    imgRef.current.src = imageSrc;
+    imgRef.current.onload = applyFilter;
 
-    image.src = imageSrc;
-    image.onload = () => {
+    imgElement.onload = () => {
       if (canvas && context) {
-        const zoomedWidth = image.width * zoom;
-        const zoomedHeight = image.height * zoom;
-        const translateX = (image.width - zoomedWidth) / 2;
-        const translateY = (image.height - zoomedHeight) / 2;
+        const zoomedWidth = imgElement.width * zoom;
+        const zoomedHeight = imgElement.height * zoom;
+        const translateX = (imgElement.width - zoomedWidth) / 2;
+        const translateY = (imgElement.height - zoomedHeight) / 2;
 
         // Set canvas dimensions to match the image.
-        canvas.width = image.width;
-        canvas.height = image.height;
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
 
         // Clear the canvas before drawing the updated image.
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -164,7 +164,7 @@ export const usePhotoEditor = ({
 
         context.translate(translateX + offsetX, translateY + offsetY);
         context.scale(zoom, zoom);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
 
         context.restore();
 

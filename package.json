@@ -1,8 +1,8 @@
 {
 	"name": "react-photo-editor",
-	"description": "React component for image editing with filters, rotate, zoom and more.",
+	"description": "React component and hook for image editing, offering controls for brightness, contrast, saturation, and grayscale, along with features to rotate, flip, pan, and zoom photos.",
 	"private": false,
-	"version": "2.1.4-rc.3",
+	"version": "2.1.4",
 	"author": "Usama Chouhan (musama619)",
 	"license": "MIT",
 	"type": "module",
@@ -14,13 +14,17 @@
 	"keywords": [
 		"photo editor",
 		"image editor",
+		"canvas",
+		"editor",
+		"image",
 		"react photo editor",
 		"react image editor",
 		"image editing",
+		"image manipulation",
+		"photo manipulation",
 		"react-photo-editor",
 		"react-image-editor",
 		"react component",
-		"react pic editor",
 		"react",
 		"reactjs"
 	],
@@ -77,7 +81,7 @@
 		"tailwindcss": "^3.4.4",
 		"typescript": "^5.0.2",
 		"vite": "^5.3.2",
-		"vite-plugin-dts": "^3.9.1",
+		"vite-plugin-dts": "^4.0.3",
 		"vitest": "^1.6.0"
 	}
 }

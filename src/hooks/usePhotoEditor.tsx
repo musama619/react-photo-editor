@@ -77,9 +77,6 @@ export const usePhotoEditor = ({
   // State to hold the source of the image.
   const [imageSrc, setImageSrc] = useState<string>('');
 
-  // State to hold the name of the image file.
-  const [imageName, setImageName] = useState<string>('');
-
   // State variables for various image transformations.
   const [brightness, setBrightness] = useState(defaultBrightness);
   const [contrast, setContrast] = useState(defaultContrast);
@@ -101,7 +98,6 @@ export const usePhotoEditor = ({
     if (file) {
       const fileSrc = URL.createObjectURL(file);
       setImageSrc(fileSrc);
-      setImageName(file.name);
 
       // Clean up the object URL when the component unmounts or file changes.
       return () => {
@@ -179,12 +175,12 @@ export const usePhotoEditor = ({
   const generateEditedFile = (): Promise<File | null> => {
     return new Promise((resolve, reject) => {
       const canvas = canvasRef.current;
-      if (!canvas) {
+      if (!canvas || !file) {
         resolve(null);
         return;
       }
 
-      const fileExtension = (imageName.split('.').pop() || '').toLowerCase();
+      const fileExtension = (file.name.split('.').pop() || '').toLowerCase();
       let mimeType;
       switch (fileExtension) {
         case 'jpg':
@@ -200,7 +196,7 @@ export const usePhotoEditor = ({
 
       canvas.toBlob((blob) => {
         if (blob) {
-          const newFile = new File([blob], imageName, { type: blob.type });
+          const newFile = new File([blob], file.name, { type: blob.type });
           resolve(newFile);
         } else {
           resolve(null);
@@ -211,9 +207,9 @@ export const usePhotoEditor = ({
 
   const downloadImage = () => {
     const canvas = canvasRef.current;
-    if (canvas) {
+    if (canvas && file) {
       const link = document.createElement('a');
-      link.download = imageName;
+      link.download = file.name;
       link.href = canvas.toDataURL(file?.type);
       link.click();
     }
@@ -306,41 +302,77 @@ export const usePhotoEditor = ({
 
   // Expose the necessary state and handlers for external use.
   return {
+    /** Reference to the canvas element. */
     canvasRef,
+    /** Source URL of the image being edited. */
     imageSrc,
+    /** Current brightness level. */
     brightness,
+    /** Current contrast level. */
     contrast,
+    /** Current saturation level. */
     saturate,
+    /** Current grayscale level. */
     grayscale,
+    /** Current rotation angle in degrees. */
     rotate,
+    /** Flag indicating if the image is flipped horizontally. */
     flipHorizontal,
+    /** Flag indicating if the image is flipped vertically. */
     flipVertical,
+    /** Current zoom level. */
     zoom,
+    /** Flag indicating if the image is being dragged. */
     isDragging,
+    /** Starting coordinates for panning. */
     panStart,
+    /** Current horizontal offset for panning. */
     offsetX,
+    /** Current vertical offset for panning. */
     offsetY,
+    /** Function to set the brightness level. */
     setBrightness,
+    /** Function to set the contrast level. */
     setContrast,
+    /** Function to set the saturation level. */
     setSaturate,
+    /** Function to set the grayscale level. */
     setGrayscale,
+    /** Function to set the rotation angle. */
     setRotate,
+    /** Function to set the horizontal flip state. */
     setFlipHorizontal,
+    /** Function to set the vertical flip state. */
     setFlipVertical,
+    /** Function to set the zoom level. */
     setZoom,
+    /** Function to set the dragging state. */
     setIsDragging,
+    /** Function to set the starting coordinates for panning. */
     setPanStart,
+    /** Function to set the horizontal offset for panning. */
     setOffsetX,
+    /** Function to set the vertical offset for panning. */
     setOffsetY,
+    /** Function to zoom in. */
     handleZoomIn,
+    /** Function to zoom out. */
     handleZoomOut,
+    /** Function to handle pointer down events. */
     handlePointerDown,
+    /** Function to handle pointer up events. */
     handlePointerUp,
+    /** Function to handle pointer move events. */
     handlePointerMove,
+    /** Function to handle wheel events for zooming. */
     handleWheel,
+    /** Function to download the edited image. */
     downloadImage,
+    /** Function to generate the edited image file. */
     generateEditedFile,
+    /** Function to reset filters and styles to default. */
     resetFilters,
+    /** Function to apply filters and transformations. */
     applyFilter,
   };
 };

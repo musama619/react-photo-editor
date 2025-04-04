@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, ChangeEvent } from 'react';
+import { useEffect, ChangeEvent } from 'react';
 import { ReactPhotoEditorProps } from './interface';
 import './style.css';
 import { usePhotoEditor } from '../hooks/usePhotoEditor';
 const modalHeaderButtonClasses =
-	'text-gray-900 bg-white border border-gray-300 ml-2 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-full text-sm px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700';
+	'rpe-text-gray-900 rpe-bg-white rpe-border rpe-border-gray-300 rpe-ml-2 rpe-focus:outline-hidden rpe-hover:bg-gray-100 rpe-focus:ring-4 rpe-focus:ring-gray-100 rpe-font-medium rpe-rounded-full rpe-text-sm rpe-px-2 rpe-py-1 rpe-dark:bg-gray-800 rpe-dark:text-white rpe-dark:border-gray-600 rpe-dark:hover:bg-gray-700 rpe-dark:hover:border-gray-600 rpe-dark:focus:ring-gray-700';
 export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 	file,
 	onSaveImage,
@@ -32,14 +32,9 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		flipHorizontal: 'Flip photo horizontally',
 		flipVertical: 'Flip photo vertically',
 		zoomIn: 'Zoom in',
-		zoomOut: 'Zoom out'
-	}
+		zoomOut: 'Zoom out',
+	},
 }) => {
-
-	if (!file) {
-		return null;
-	}
-
 	const {
 		canvasRef,
 		brightness,
@@ -66,7 +61,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 		resetFilters,
 		downloadImage,
 		generateEditedFile,
-		applyFilter
+		applyFilter,
 	} = usePhotoEditor({ file });
 
 	useEffect(() => {
@@ -167,43 +162,39 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 				<>
 					<div
 						data-testid='photo-editor-main'
-						className='photo-editor-main justify-center items-center flex overflow-auto fixed inset-0 z-50'
+						className='photo-editor-main rpe-justify-center rpe-items-center rpe-flex rpe-overflow-auto rpe-fixed rpe-inset-0 rpe-z-50'
 					>
 						<div
 							style={{
 								height: modalHeight ?? '38rem',
-								width: modalWidth ?? '40rem'
+								width: modalWidth ?? '40rem',
 							}}
 							id='photo-editor-modal'
-							className='relative rounded-lg shadow-lg max-sm:w-[22rem] bg-white dark:bg-[#1e1e1e]'
+							className='rpe-relative rpe-rounded-lg rpe-shadow-lg rpe-max-sm:w-[22rem] rpe-bg-white rpe-dark:bg-[#1e1e1e]'
 						>
-							<div className='flex justify-end p-2 rounded-t'>
-								<button
-									className={modalHeaderButtonClasses}
-									onClick={closeEditor}
-									type='button'
-								>
+							<div className='rpe-flex rpe-justify-end rpe-p-2 rpe-rounded-t'>
+								<button className={modalHeaderButtonClasses} onClick={closeEditor} type='button'>
 									{labels.close}
 								</button>
 								<button
 									className={modalHeaderButtonClasses}
-									onClick={() => saveImage()}
+									onClick={() => void saveImage()}
 									type='button'
 									data-testid='save-button'
 								>
 									{labels.save}
 								</button>
 							</div>
-							<div className='p-2'>
-								<div className='flex flex-col'>
+							<div className='rpe-p-2'>
+								<div className='rpe-flex rpe-flex-col'>
 									<canvas
 										style={{
 											width: canvasWidth ?? 'auto',
 											height: canvasHeight ?? 'auto',
 											maxHeight: maxCanvasHeight ?? '22rem',
-											maxWidth: maxCanvasWidth ?? '36rem'
+											maxWidth: maxCanvasWidth ?? '36rem',
 										}}
-										className={`canvas border dark:border-gray-700 object-fit mx-auto ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+										className={`canvas rpe-touch-none rpe-border rpe-dark:border-gray-700 rpe-object-fill rpe-mx-auto ${isDragging ? 'rpe-cursor-grabbing' : 'rpe-cursor-grab'}`}
 										data-testid='image-editor-canvas'
 										id='canvas'
 										ref={canvasRef}
@@ -215,15 +206,18 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 										width={typeof canvasWidth === 'number' ? canvasWidth : undefined}
 										height={typeof canvasHeight === 'number' ? canvasHeight : undefined}
 									/>
-									<div className='items-center flex m-1 flex-col'>
-										<div className='flex flex-col bottom-12 gap-1 mt-4 max-sm:w-72 w-11/12 absolute '>
+									<div className='rpe-items-center rpe-flex rpe-m-1 rpe-flex-col'>
+										<div className='rpe-flex rpe-flex-col rpe-bottom-12 rpe-gap-1 rpe-mt-4 rpe-max-sm:w-72 rpe-w-11/12 rpe-absolute '>
 											{renderInputs.map(
 												(input) =>
 													!input.hide && (
-														<div key={input.name} className='flex flex-row items-center'>
+														<div
+															key={input.name}
+															className='rpe-flex rpe-flex-row rpe-items-center'
+														>
 															<label
 																id={`${input.name}InputLabel`}
-																className='text-xs font-medium text-gray-900 dark:text-white w-10'
+																className='rpe-text-xs rpe-font-medium rpe-text-gray-900 rpe-dark:text-white rpe-w-10'
 															>
 																{input.name[0].toUpperCase() + input.name.slice(1)}:{' '}
 															</label>
@@ -238,7 +232,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 																}
 																min={input.min}
 																max={input.max}
-																className='ml-[1.7rem] w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700'
+																className='rpe-ml-[1.7rem] rpe-w-full rpe-h-1 rpe-bg-gray-200 rpe-rounded-lg rpe-appearance-none rpe-cursor-pointer rpe-range-sm rpe-dark:bg-gray-700'
 															/>
 															<input
 																type='number'
@@ -249,18 +243,18 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 																}
 																min={input.min}
 																max={input.max}
-																className='w-14 ml-2 rounded-md text-right bg-gray-100 text-black dark:bg-gray-700 dark:text-white'
+																className='rpe-w-14 rpe-ml-2 rpe-rounded-md rpe-text-right rpe-bg-gray-100 rpe-text-black rpe-dark:bg-gray-700 rpe-dark:text-white'
 															/>
 														</div>
 													)
 											)}
 										</div>
 									</div>
-									<div className='flex justify-center'>
-										<div className='mb-1 absolute bottom-0 mt-2'>
+									<div className='rpe-flex rpe-justify-center'>
+										<div className='rpe-mb-1 rpe-absolute rpe-bottom-0 rpe-mt-2'>
 											<button
 												title={labels.reset}
-												className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
+												className='rpe-mx-1 rpe-focus:ring-2 rpe-focus:ring-gray-300 rpe-dark:focus:ring-gray-700 rpe-rounded-md rpe-p-1'
 												onClick={resetFilters}
 												aria-label={labels.reset}
 												type='button'
@@ -275,16 +269,16 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 													strokeWidth='2'
 													strokeLinecap='round'
 													strokeLinejoin='round'
-													className='lucide lucide-rotate-ccw dark:stroke-slate-200'
+													className='lucide lucide-rotate-ccw rpe-dark:stroke-slate-200'
 												>
 													<path d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8' />
 													<path d='M3 3v5h5' />
 												</svg>
 											</button>
 											{allowFlip && (
-												<div className='inline-block' data-testid='flip-btns'>
+												<div className='rpe-inline-block' data-testid='flip-btns'>
 													<button
-														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
+														className='rpe-mx-1 rpe-focus:ring-2 rpe-focus:ring-gray-300 rpe-dark:focus:ring-gray-700 rpe-rounded-md rpe-p-1'
 														onClick={() => setFlipHorizontal(!flipHorizontal)}
 														type='button'
 														title={labels.flipHorizontal}
@@ -300,7 +294,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 															strokeWidth='2'
 															strokeLinecap='round'
 															strokeLinejoin='round'
-															className='lucide lucide-flip-horizontal dark:stroke-slate-200'
+															className='lucide lucide-flip-horizontal rpe-dark:stroke-slate-200'
 														>
 															<path d='M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3' />
 															<path d='M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3' />
@@ -311,7 +305,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 														</svg>
 													</button>
 													<button
-														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
+														className='rpe-mx-1 rpe-focus:ring-2 rpe-focus:ring-gray-300 rpe-dark:focus:ring-gray-700 rpe-rounded-md rpe-p-1'
 														onClick={() => setFlipVertical(!flipVertical)}
 														type='button'
 														title={labels.flipVertical}
@@ -327,7 +321,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 															strokeWidth='2'
 															strokeLinecap='round'
 															strokeLinejoin='round'
-															className='lucide lucide-flip-vertical dark:stroke-slate-200'
+															className='lucide lucide-flip-vertical rpe-dark:stroke-slate-200'
 														>
 															<path d='M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3' />
 															<path d='M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3' />
@@ -340,11 +334,11 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 												</div>
 											)}
 											{allowZoom && (
-												<div className='inline-block' data-testid='zoom-btns'>
+												<div className='rpe-inline-block' data-testid='zoom-btns'>
 													<button
 														data-testid='zoom-in'
 														type='button'
-														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
+														className='rpe-mx-1 rpe-focus:ring-2 rpe-focus:ring-gray-300 rpe-dark:focus:ring-gray-700 rpe-rounded-md rpe-p-1'
 														onClick={handleZoomIn}
 														title={labels.zoomIn}
 														aria-label={labels.zoomIn}
@@ -359,7 +353,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 															strokeWidth='2'
 															strokeLinecap='round'
 															strokeLinejoin='round'
-															className='lucide lucide-zoom-in dark:stroke-slate-200'
+															className='lucide lucide-zoom-in rpe-dark:stroke-slate-200'
 														>
 															<circle cx='11' cy='11' r='8' />
 															<line x1='21' x2='16.65' y1='21' y2='16.65' />
@@ -370,7 +364,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 													<button
 														data-testid='zoom-out'
 														type='button'
-														className='mx-1 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 rounded-md p-1'
+														className='rpe-mx-1 rpe-focus:ring-2 rpe-focus:ring-gray-300 rpe-dark:focus:ring-gray-700 rpe-rounded-md rpe-p-1'
 														onClick={handleZoomOut}
 														title={labels.zoomOut}
 														aria-label={labels.zoomOut}
@@ -385,7 +379,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 															strokeWidth='2'
 															strokeLinecap='round'
 															strokeLinejoin='round'
-															className='lucide lucide-zoom-out dark:stroke-slate-200'
+															className='lucide lucide-zoom-out rpe-dark:stroke-slate-200'
 														>
 															<circle cx='11' cy='11' r='8' />
 															<line x1='21' x2='16.65' y1='21' y2='16.65' />
@@ -400,7 +394,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
 							</div>
 						</div>
 					</div>
-					<div className='opacity-75 fixed inset-0 z-40 bg-black'></div>
+					<div className='rpe-opacity-75 rpe-fixed rpe-inset-0 rpe-z-40 rpe-bg-black'></div>
 				</>
 			)}
 		</>

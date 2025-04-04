@@ -173,7 +173,7 @@ export const usePhotoEditor = ({
  * @returns {Promise<File | null>} A promise that resolves with the edited file or null if the canvas is not available.
  */
   const generateEditedFile = (): Promise<File | null> => {
-    return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
       const canvas = canvasRef.current;
       if (!canvas || !file) {
         resolve(null);
@@ -241,7 +241,7 @@ export const usePhotoEditor = ({
   /**
    * Handles the pointer down event for initiating drag-and-drop panning.
    */
-  const handlePointerDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+	const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     setIsDragging(true);
     const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
     const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
@@ -251,7 +251,7 @@ export const usePhotoEditor = ({
   /**
    * Handles the pointer move event for updating the image position during drag-and-drop panning.
    */
-  const handlePointerMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+	const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (isDragging && panStart) {
       event.preventDefault();
 

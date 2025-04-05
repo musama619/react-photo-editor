@@ -21,10 +21,11 @@ export default defineConfig({
 			fileName: (format) => `react-photo-editor.${format}.js`,
 		},
 		rollupOptions: {
-			external: ['react', 'react-dom'],
+			external: ['react', 'react-dom', 'react/jsx-runtime'], // fix react 19 TypeError: Cannot read property'ReactCurrentDispatcher'of undefined - https://stackoverflow.com/a/79350215/13405106
 			output: {
 				globals: {
 					react: 'React',
+					'react/jsx-runtime': 'ReactJsxRuntime',
 				},
 			},
 		},

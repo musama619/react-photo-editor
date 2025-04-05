@@ -1,6 +1,6 @@
 {
 	"name": "react-photo-editor",
-	"description": "React component and hook for image editing, offering controls for brightness, contrast, saturation, and grayscale, along with features to rotate, flip, pan, and zoom photos.",
+	"description": "React component and hook for image editing, offering controls for brightness, contrast, saturation, and grayscale, along with features to rotate, flip, pan, draw, and zoom photos.",
 	"private": false,
 	"version": "3.0.0",
 	"author": "Usama Chouhan (musama619)",

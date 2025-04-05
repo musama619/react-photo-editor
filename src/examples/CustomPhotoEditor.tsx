@@ -54,11 +54,12 @@ const CustomPhotoEditor = () => {
 							height: 'auto',
 							maxHeight: '22rem',
 							maxWidth: '36rem',
+							touchAction: 'none',
 						}}
 						ref={canvasRef}
-						onMouseDown={handlePointerDown}
-						onMouseMove={handlePointerMove}
-						onMouseUp={handlePointerUp}
+						onPointerDown={handlePointerDown}
+						onPointerMove={handlePointerMove}
+						onPointerUp={handlePointerUp}
 						onWheel={handleWheel}
 					/>
 				</div>

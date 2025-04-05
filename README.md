@@ -107,6 +107,7 @@ See it in action on [Stackblitz](https://stackblitz.com/edit/react-flcdhq?file=s
 
 - **CSS Import Removed**: The CSS file import (`import 'react-photo-editor/dist/style.css'`) is no longer required
 - **Tailwind CSS Configuration**: No longer need to add `'./node_modules/react-photo-editor/dist/*.js'` to your Tailwind config
+- **Changed canvas class name and id**: The ***class name*** and ***id*** for the canvas element have been changed from `canvas` to `rpe-canvas` for better consistency with the rest of the project. Make sure to update your usage accordingly.
 
 ## 🛠️ Configuration Options
 

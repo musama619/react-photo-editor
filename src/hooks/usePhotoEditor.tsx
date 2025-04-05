@@ -48,11 +48,26 @@ interface UsePhotoEditorParams {
    * Initial rotation angle in degrees (default: 0).
    */
   defaultRotate?: number;
+
+  /**
+   * Initial line color for drawing (default: '#000000').
+   */
+  defaultLineColor?: string;
+
+  /**
+   * Initial line width for drawing (default: 2).
+   */
+  defaultLineWidth?: number;
+
+  /**
+   * Initial mode for the canvas (default: 'pan').
+   */
+  defaultMode?: 'pan' | 'draw';
 }
 
 /**
  * Custom hook for handling photo editing within a canvas.
- * 
+ *
  * @param {UsePhotoEditorParams} params - Configuration parameters for the hook.
  * @returns {Object} - Returns state and functions for managing image editing.
  */
@@ -66,8 +81,10 @@ export const usePhotoEditor = ({
   defaultFlipVertical = false,
   defaultZoom = 1,
   defaultRotate = 0,
+  defaultLineColor = '#000000',
+  defaultLineWidth = 2,
+  defaultMode = 'pan',
 }: UsePhotoEditorParams) => {
-
   // Ref to the canvas element where the image will be drawn.
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -93,6 +110,17 @@ export const usePhotoEditor = ({
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
 
+  const [mode, setMode] = useState<'draw' | 'pan'>(defaultMode);
+  const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
+
+  // State variables for drawing on the canvas.
+  const [lineColor, setLineColor] = useState<string>(defaultLineColor);
+  const [lineWidth, setLineWidth] = useState<number>(defaultLineWidth);
+
+  const drawingPathsRef = useRef<
+    { path: { x: number; y: number }[]; color: string; width: number }[]
+  >([]);
+
   // Effect to update the image source when the file changes.
   useEffect(() => {
     if (file) {
@@ -109,7 +137,39 @@ export const usePhotoEditor = ({
   // Effect to apply transformations and filters whenever relevant state changes.
   useEffect(() => {
     applyFilter();
-  }, [file, imageSrc, rotate, flipHorizontal, flipVertical, zoom, brightness, contrast, saturate, grayscale, offsetX, offsetY]);
+  }, [
+    file,
+    imageSrc,
+    rotate,
+    flipHorizontal,
+    flipVertical,
+    zoom,
+    brightness,
+    contrast,
+    saturate,
+    grayscale,
+    offsetX,
+    offsetY,
+  ]);
+
+  const redrawDrawingPaths = (context: CanvasRenderingContext2D) => {
+    drawingPathsRef.current.forEach(({ path, color, width }) => {
+      context.beginPath();
+      context.strokeStyle = color;
+      context.lineWidth = width;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+
+      path.forEach((point, index) => {
+        if (index === 0) {
+          context.moveTo(point.x, point.y);
+        } else {
+          context.lineTo(point.x, point.y);
+        }
+      });
+      context.stroke();
+    });
+  };
 
   /**
    * Applies the selected filters and transformations to the image on the canvas.
@@ -164,16 +224,18 @@ export const usePhotoEditor = ({
 
         context.restore();
 
+        context.filter = 'none';
+        redrawDrawingPaths(context);
       }
     };
   };
 
   /**
- * Generates a file from the canvas content.
- * @returns {Promise<File | null>} A promise that resolves with the edited file or null if the canvas is not available.
- */
+   * Generates a file from the canvas content.
+   * @returns {Promise<File | null>} A promise that resolves with the edited file or null if the canvas is not available.
+   */
   const generateEditedFile = (): Promise<File | null> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const canvas = canvasRef.current;
       if (!canvas || !file) {
         resolve(null);
@@ -217,7 +279,7 @@ export const usePhotoEditor = ({
 
   /**
    * Generates a string representing the current filter settings.
-   * 
+   *
    * @returns {string} - A CSS filter string.
    */
   const getFilterString = (): string => {
@@ -239,19 +301,62 @@ export const usePhotoEditor = ({
   };
 
   /**
-   * Handles the pointer down event for initiating drag-and-drop panning.
+   * Handles the pointer down event for initiating drawing or drag-and-drop panning.
    */
-  const handlePointerDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    setIsDragging(true);
-    const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
-    const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
-    setPanStart({ x: initialX, y: initialY });
+  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (mode === 'draw') {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (event.clientX - rect.left) * scaleX;
+      const y = (event.clientY - rect.top) * scaleY;
+      setDrawStart({ x, y });
+
+      drawingPathsRef.current.push({ path: [{ x, y }], color: lineColor, width: lineWidth });
+    } else {
+      setIsDragging(true);
+      const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
+      const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
+      setPanStart({ x: initialX, y: initialY });
+    }
   };
 
   /**
-   * Handles the pointer move event for updating the image position during drag-and-drop panning.
+   * Handles the pointer move event for updating the drawing path or panning the image.
    */
-  const handlePointerMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (mode === 'draw' && drawStart) {
+      const canvas = canvasRef.current;
+      const context = canvas?.getContext('2d');
+      const rect = canvas?.getBoundingClientRect();
+
+      if (!canvas || !context || !rect) return;
+
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (event.clientX - rect.left) * scaleX;
+      const y = (event.clientY - rect.top) * scaleY;
+      const currentPath = drawingPathsRef.current[drawingPathsRef.current.length - 1].path;
+
+      context.strokeStyle = lineColor;
+      context.lineWidth = lineWidth;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+
+      context.beginPath();
+      context.moveTo(drawStart.x, drawStart.y);
+      context.lineTo(x, y);
+      context.stroke();
+
+      setDrawStart({ x, y });
+      currentPath.push({ x, y });
+
+      return;
+    }
+
     if (isDragging && panStart) {
       event.preventDefault();
 
@@ -264,10 +369,11 @@ export const usePhotoEditor = ({
   };
 
   /**
-   * Handles the pointer up event for ending the drag-and-drop panning.
+   * Handles the pointer up event for ending the drawing or panning action.
    */
   const handlePointerUp = () => {
     setIsDragging(false);
+    setDrawStart(null);
   };
 
   /**
@@ -293,12 +399,16 @@ export const usePhotoEditor = ({
     setFlipHorizontal(defaultFlipHorizontal);
     setFlipVertical(defaultFlipVertical);
     setZoom(defaultZoom);
+    setLineColor(defaultLineColor);
+    setLineWidth(defaultLineWidth);
+    drawingPathsRef.current = [];
     setOffsetX(0);
     setOffsetY(0);
     setPanStart(null);
     setIsDragging(false);
+    setMode('pan');
+    applyFilter();
   };
-
 
   // Expose the necessary state and handlers for external use.
   return {
@@ -330,6 +440,12 @@ export const usePhotoEditor = ({
     offsetX,
     /** Current vertical offset for panning. */
     offsetY,
+    /** Current mode ('pan' or 'draw') */
+    mode,
+    /** Current line color. */
+    lineColor,
+    /** Current line width. */
+    lineWidth,
     /** Function to set the brightness level. */
     setBrightness,
     /** Function to set the contrast level. */
@@ -374,5 +490,11 @@ export const usePhotoEditor = ({
     resetFilters,
     /** Function to apply filters and transformations. */
     applyFilter,
+    /** Function to set the mode. */
+    setMode,
+    /** Function to set the line color. */
+    setLineColor,
+    /** Function to set the line width. */
+    setLineWidth,
   };
 };

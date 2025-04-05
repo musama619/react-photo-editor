@@ -2,10 +2,20 @@
 
 ![react-photo-editor](https://github.com/musama619/react-photo-editor/blob/main/react-photo-editor.png)
 
-[![NPM Version](https://img.shields.io/npm/v/react-photo-editor.svg)](https://www.npmjs.com/package/react-photo-editor)
-[![NPM Downloads](https://img.shields.io/npm/dm/react-photo-editor.svg)](https://www.npmjs.com/package/react-photo-editor)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/react-photo-editor)](https://bundlephobia.com/package/react-photo-editor)
-[![License](https://img.shields.io/npm/l/react-photo-editor.svg)](https://github.com/musama619/react-photo-editor/blob/main/LICENSE)
+<p align="center">
+  <a href="https://www.npmjs.com/package/react-photo-editor">
+    <img src="https://img.shields.io/npm/v/react-photo-editor.svg" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/react-photo-editor">
+    <img src="https://img.shields.io/npm/dm/react-photo-editor.svg" alt="NPM Downloads" />
+  </a>
+  <a href="https://bundlephobia.com/package/react-photo-editor">
+    <img src="https://img.shields.io/bundlephobia/minzip/react-photo-editor" alt="Bundle Size" />
+  </a>
+  <a href="https://github.com/musama619/react-photo-editor/blob/main/LICENSE">
+    <img src="https://img.shields.io/npm/l/react-photo-editor.svg" alt="License" />
+  </a>
+</p>
 
 React component and hook for image editing with options to set **brightness**, **contrast**, **saturation**, and **grayscale**. Also with features to **rotate**, **flip**, **pan**, **draw** and **zoom** the photo.
 

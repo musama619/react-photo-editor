@@ -53,10 +53,6 @@ const PhotoEditor = () => {
 				open={showModal}
 				onClose={hideModal}
 				file={file}
-				allowColorEditing={true}
-				allowFlip={true}
-				allowRotate={true}
-				allowZoom={true}
 				onSaveImage={handleSaveImage}
 				downloadOnSave={true}
 				// labels={translationsFr}

@@ -29,6 +29,12 @@ const CustomPhotoEditor = () => {
 		setFlipVertical,
 		zoom,
 		setZoom,
+		mode,
+		setMode,
+		setLineColor,
+		lineColor,
+		setLineWidth,
+		lineWidth,
 		handlePointerDown,
 		handlePointerUp,
 		handlePointerMove,
@@ -148,9 +154,37 @@ const CustomPhotoEditor = () => {
 					</label>
 				</div>
 
-				<div className='buttons'>
-					<button onClick={resetFilters}>Reset</button>
-					<button onClick={downloadImage}>Save</button>
+				<div>
+					<label>
+						<input
+							type='checkbox'
+							checked={mode == 'draw'}
+							onChange={(e) => setMode(e.target.checked ? 'draw' : 'pan')}
+						/>
+						Draw Mode
+					</label>
+				</div>
+
+				{mode == 'draw' && (
+					<>
+						<input type='color' onChange={(e) => setLineColor(e.target.value)} value={lineColor} />
+						<input
+							type='number'
+							onChange={(e) => setLineWidth(Number(e.target.value))}
+							value={lineWidth}
+							min={2}
+							max={100}
+						/>
+					</>
+				)}
+
+				<div className='buttons rpe-flex rpe-gap-4'>
+					<button className='rpe-border rpe-p-1 rpe-rounded-md' onClick={resetFilters}>
+						Reset
+					</button>
+					<button className='rpe-border rpe-p-1 rpe-rounded-md' onClick={downloadImage}>
+						Save
+					</button>
 				</div>
 			</div>
 		</div>

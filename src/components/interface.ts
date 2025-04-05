@@ -11,6 +11,9 @@ export interface ReactPhotoEditorTranslations {
 	flipVertical: string;
 	zoomIn: string;
 	zoomOut: string;
+	draw: string;
+	brushColor: string;
+	brushWidth: string;
 }
 
 export interface ReactPhotoEditorProps {
@@ -42,6 +45,12 @@ export interface ReactPhotoEditorProps {
 	 * @default true
 	 */
 	allowZoom?: boolean;
+
+	/**
+	 * Whether to enable drawing options.
+	 * @default true
+	 */
+	allowDrawing?: boolean;
 
 	/**
 	 * Whether to enable the option to download the edited image upon saving.

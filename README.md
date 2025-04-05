@@ -1,3 +1,5 @@
+# react-photo-editor
+
 ![react-photo-editor](https://github.com/musama619/react-photo-editor/blob/main/react-photo-editor.png)
 
 [![NPM Version](https://img.shields.io/npm/v/react-photo-editor.svg)](https://www.npmjs.com/package/react-photo-editor)
@@ -5,43 +7,52 @@
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/react-photo-editor)](https://bundlephobia.com/package/react-photo-editor)
 [![License](https://img.shields.io/npm/l/react-photo-editor.svg)](https://github.com/musama619/react-photo-editor/blob/main/LICENSE)
 
-# react-photo-editor
+React component and hook for image editing with options to set **brightness**, **contrast**, **saturation**, and **grayscale**. Also with features to **rotate**, **flip**, **pan**, **draw** and **zoom** the photo.
 
-React component for image editing with options to set **brightness**, **contrast**, **saturation**, and **grayscale**. Also with features to **rotate**, **flip**, **pan**, **draw**, and **zoom** the photo.
+## 📋 Table of Contents
 
-### Migrating from v2.x to v3.0.0
+- [✨ Features](#-features)
+- [📦 Installation](#-installation)
+- [🚀 Quick Start](#-quick-start)
+- [📱 Live Demo](#-live-demo)
+- [⚠️ Migration Guide](#️-migration-guide)
+- [🛠️ Configuration Options](#️-configuration-options)
+- [🧰 Advanced Usage: Custom Component with usePhotoEditor Hook](#-advanced-usage-custom-component-with-usephotoeditor-hook)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
 
-#### ⚠️ Breaking Changes
+## ✨ Features
 
-- **CSS Import Removed**: The CSS file previously imported with `import 'react-photo-editor/dist/style.css'` is no longer required and won't be found if referenced.
-- **Tailwind CSS Configuration**: No longer need to add `'./node_modules/react-photo-editor/dist/*.js'` to your Tailwind config.
+- 🎨 **Color adjustments**: Brightness, contrast, saturation, and grayscale
+- 🔄 **Image manipulation**: Rotate and flip (horizontal/vertical)
+- 🔍 **Interactive control**: Pan and zoom functionality
+- ✏️ **Drawing tools**: Draw directly on canvas
+- 🧩 **Flexible integration**: Use as a component or with the `usePhotoEditor` hook
+- 🎯 **Highly customizable**: Configurable UI, labels, and functionality
 
-## Installation
+## 📦 Installation
 
-### npm
+Choose your preferred package manager:
 
-```js
+```bash
+# Using npm
 npm install react-photo-editor
-```
 
-### yarn
-
-```js
+# Using yarn
 yarn add react-photo-editor
 ```
 
-### [Stackblitz - Check It Live](https://stackblitz.com/edit/react-flcdhq?file=src%2FApp.js,package.json)
+## 🚀 Quick Start
 
-## Basic Usage
-
-```ts
+```jsx
+import { useState } from 'react'
 import { ReactPhotoEditor } from 'react-photo-editor'
 
 function App() {
- const [file, setFile] = useState<File | undefined>()
- const [showModal, setShowModal] = useState(false)
+  const [file, setFile] = useState()
+  const [showModal, setShowModal] = useState(false)
 
-   // Show modal if file is selected
+  // Show modal if file is selected
   const showModalHandler = () => {
     if (file) {
       setShowModal(true)
@@ -54,11 +65,12 @@ function App() {
   }
 
   // Save edited image
-  const handleSaveImage = (editedFile: File) => {
-    setFile(editedFile);
-  };
+  const handleSaveImage = (editedFile) => {
+    setFile(editedFile)
+    // Do something with the edited file
+  }
 
-  const setFileData = (e: React.ChangeEvent<HTMLInputElement> | null) => {
+  const setFileData = (e) => {
     if (e?.target?.files && e.target.files.length > 0) {
       setFile(e.target.files[0])
     }
@@ -67,12 +79,12 @@ function App() {
   return (
     <>
       <input
-          type="file"
-          onChange={(e) => setFileData(e)}
-          multiple={false}
-       />
+        type="file"
+        onChange={(e) => setFileData(e)}
+        multiple={false}
+      />
 
-      <button onClick={showModalHandler}>Edit</button>
+      <button onClick={showModalHandler}>Edit Photo</button>
 
       <ReactPhotoEditor
         open={showModal}
@@ -80,7 +92,6 @@ function App() {
         file={file}
         onSaveImage={handleSaveImage}
       />
-
     </>
   )
 }
@@ -88,309 +99,192 @@ function App() {
 export default App
 ```
 
-## Options
+## 📱 Live Demo
 
-```ts
-export interface ReactPhotoEditorProps {
-	/**
-	 * The input image file to be edited.
-	 */
-	file: File | undefined;
+See it in action on [Stackblitz](https://stackblitz.com/edit/react-flcdhq?file=src%2FApp.js,package.json)
 
-	/**
-	 * Whether to allow color editing options.
-	 * @default  true
-	 */
-	allowColorEditing?: boolean;
+## ⚠️ Migration Guide
 
-	/**
-	 * Whether to allow rotation of the image.
-	 * @default  true
-	 */
-	allowRotate?: boolean;
+### Migrating from v2.x to v3.0.0
 
-	/**
-	 * Whether to allow flipping (horizontal/vertical) of the image.
-	 * @default  true
-	 */
-	allowFlip?: boolean;
+#### Breaking Changes
 
-	/**
-	 * Whether to allow zooming of the image.
-	 * @default  true
-	 */
-	allowZoom?: boolean;
+- **CSS Import Removed**: The CSS file import (`import 'react-photo-editor/dist/style.css'`) is no longer required
+- **Tailwind CSS Configuration**: No longer need to add `'./node_modules/react-photo-editor/dist/*.js'` to your Tailwind config
 
-	/**
-	 * Whether to enable drawing options.
-	 * @default true
-	 */
-	allowDrawing?: boolean;
+## 🛠️ Configuration Options
 
-	/**
-	 * Whether to enable the option to download the edited image upon saving.
-	 * @default  false
-	 */
-	downloadOnSave?: boolean;
+The `ReactPhotoEditor` component accepts the following props:
 
-	/**
-	 * Whether the photo editor modal is open.
-	 * @default  false
-	 */
-	open?: boolean;
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `file` | `File \| undefined` | Required | The input image file to be edited |
+| `allowColorEditing` | `boolean` | `true` | Whether to allow color editing options |
+| `allowRotate` | `boolean` | `true` | Whether to allow rotation of the image |
+| `allowFlip` | `boolean` | `true` | Whether to allow flipping of the image |
+| `allowZoom` | `boolean` | `true` | Whether to allow zooming of the image |
+| `allowDrawing` | `boolean` | `true` | Whether to enable drawing options |
+| `downloadOnSave` | `boolean` | `false` | Whether to enable downloading the edited image upon saving |
+| `open` | `boolean` | `false` | Whether the photo editor modal is open |
+| `onClose` | `() => void` | - | Function invoked when the modal is closed |
+| `onSaveImage` | `(image: File) => void` | Required | Function invoked when the edited image is saved |
+| `modalHeight` | `number \| string` | `'38rem'` | Height of the photo editor modal |
+| `modalWidth` | `number \| string` | `'40rem'` | Width of the photo editor modal |
+| `canvasWidth` | `number \| string` | `'auto'` | Width of the canvas element |
+| `canvasHeight` | `number \| string` | `'auto'` | Height of the canvas element |
+| `maxCanvasHeight` | `number \| string` | `'22rem'` | Maximum height of the canvas element |
+| `maxCanvasWidth` | `number \| string` | `'36rem'` | Maximum width of the canvas element |
+| `labels` | `ReactPhotoEditorTranslations` | - | Custom labels for UI elements |
 
-	/**
-	 * Function invoked when the photo editor modal is closed.
-	 */
-	onClose?: () => void;
+## 🧰 Advanced Usage: Custom Component with `usePhotoEditor` Hook
 
-	/**
-	 * Function invoked when the edited image is saved.
-	 * @param  image - The edited image file.
-	 */
-	onSaveImage: (image: File) => void;
+For more control over the UI and functionality, you can use the `usePhotoEditor` hook to build your own custom editor component.
 
-	/**
-	 * The height of the photo editor modal.
-	 * This can be specified as a number (pixels) or string (CSS value).
-	 * @default '38rem'
-	 */
-	modalHeight?: number | string;
+For full examples, see the [example](https://github.com/musama619/react-photo-editor/blob/main/src/examples/CustomPhotoEditor.tsx) folder.
 
-	/**
-	 * The width of the photo editor modal.
-	 * This can be specified as a number (pixels) or string (CSS value).
-	 * @default '40rem'
-	 */
-	modalWidth?: number | string;
+```jsx
+import { usePhotoEditor } from 'react-photo-editor'
 
-	/**
-	 * The width of the canvas element used for editing the image.
-	 * This can be specified as a number (pixels) or string (CSS value).
-	 * @default 'auto'
-	 */
-	canvasWidth?: number | string;
+function CustomPhotoEditor({ file }) {
+  const {
+    canvasRef,
+    brightness,
+    contrast,
+    saturate,
+    grayscale,
+    setBrightness,
+    setContrast,
+    setSaturate,
+    setGrayscale,
+    handleZoomIn,
+    handleZoomOut,
+    generateEditedFile,
+    resetFilters,
+  } = usePhotoEditor({
+    file,
+    defaultBrightness: 100,
+    defaultContrast: 100,
+    defaultSaturate: 100,
+    defaultGrayscale: 0,
+  })
 
-	/**
-	 * The height of the canvas element used for editing the image.
-	 * This can be specified as a number or string (CSS value).
-	 * @default 'auto'
-	 */
-	canvasHeight?: number | string;
+  const handleSave = async () => {
+    const editedFile = await generateEditedFile()
+    // Do something with the edited file
+  }
 
-	/**
-	 * The maximum height of the canvas element.
-	 * This can be specified as a number or string (CSS value).
-	 * @default '22rem'
-	 */
-	maxCanvasHeight?: number | string;
-
-	/**
-	 * The maximum width of the canvas element.
-	 * This can be specified as a number or string (CSS value).
-	 * @default '36rem'
-	 */
-	maxCanvasWidth?: number | string;
-
-	/**
-	 * Custom labels or text options for various elements in the photo editor.
-	 * Use this to override default text for buttons, tooltips, etc.
-	 *
-	 * Example:
-	 * labels: {
-	 *     close: 'Exit',
-	 *     save: 'Apply Changes',
-	 *     rotate: 'Turn',
-	 * }
-	 */
-	labels?: ReactPhotoEditorTranslations;
+  return (
+    <div>
+      <canvas ref={canvasRef} />
+      
+      <div>
+        <label>Brightness: {brightness}</label>
+        <input
+          type="range"
+          min="0"
+          max="200"
+          value={brightness}
+          onChange={(e) => setBrightness(Number(e.target.value))}
+        />
+      </div>
+      
+      {/* Add more controls for other parameters */}
+      
+      <button onClick={handleZoomIn}>Zoom In</button>
+      <button onClick={handleZoomOut}>Zoom Out</button>
+      <button onClick={resetFilters}>Reset</button>
+      <button onClick={handleSave}>Save</button>
+    </div>
+  )
 }
 ```
 
-## Custom component using `usePhotoEditor` hook
+### Hook Parameters
 
-The usePhotoEditor hook provides a set of functionalities for integrating image editing capabilities into your custom React components. Below is a description of its props and the fields it returns.
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `file` | `File \| undefined` | - | The image file to be edited |
+| `defaultBrightness` | `number` | `100` | Initial brightness level |
+| `defaultContrast` | `number` | `100` | Initial contrast level |
+| `defaultSaturate` | `number` | `100` | Initial saturation level |
+| `defaultGrayscale` | `number` | `0` | Initial grayscale level |
+| `defaultFlipHorizontal` | `boolean` | `false` | Initial horizontal flip state |
+| `defaultFlipVertical` | `boolean` | `false` | Initial vertical flip state |
+| `defaultZoom` | `number` | `1` | Initial zoom level |
+| `defaultRotate` | `number` | `0` | Initial rotation angle in degrees |
+| `defaultLineColor` | `string` | `#000000` | Initial line color in hex code |
+| `defaultLineWidth` | `number` | `2` | Initial line/stroke width |
+| `defaultMode` | `string` | `pan` | Initial mode (`draw` or `move`) |
 
-```ts
-/**
- * Parameters for the usePhotoEditor hook.
- */
-interface UsePhotoEditorParams {
-	/**
-	 * The image file to be edited.
-	 */
-	file?: File;
 
-	/**
-	 * Initial brightness level (default: 100).
-	 */
-	defaultBrightness?: number;
+### Return Values
 
-	/**
-	 * Initial contrast level (default: 100).
-	 */
-	defaultContrast?: number;
+The hook returns the following values and functions:
 
-	/**
-	 * Initial saturation level (default: 100).
-	 */
-	defaultSaturate?: number;
+#### 🖼 Canvas & Image
 
-	/**
-	 * Initial grayscale level (default: 0).
-	 */
-	defaultGrayscale?: number;
+| Name        | Type                            | Description                          |
+|-------------|----------------------------------|--------------------------------------|
+| `canvasRef` | `RefObject<HTMLCanvasElement>`  | Reference to the canvas element      |
+| `imageSrc`  | `string`                         | The source of the loaded image       |
 
-	/**
-	 * Flip the image horizontally (default: false).
-	 */
-	defaultFlipHorizontal?: boolean;
+#### 🎛 State Values & Setters
 
-	/**
-	 * Flip the image vertically (default: false).
-	 */
-	defaultFlipVertical?: boolean;
+| State           | Setter              | Type               | Description                                  |
+|-----------------|---------------------|--------------------|----------------------------------------------|
+| `brightness`     | `setBrightness`     | `number`           | Brightness level (default `100`)             |
+| `contrast`       | `setContrast`       | `number`           | Contrast level (default `100`)               |
+| `saturate`       | `setSaturate`       | `number`           | Saturation level (default `100`)             |
+| `grayscale`      | `setGrayscale`      | `number`           | Grayscale level (default `0`)                |
+| `rotate`         | `setRotate`         | `number`           | Rotation angle in degrees                    |
+| `zoom`           | `setZoom`           | `number`           | Zoom level                                   |
+| `flipHorizontal` | `setFlipHorizontal` | `boolean`          | Flip horizontally                            |
+| `flipVertical`   | `setFlipVertical`   | `boolean`          | Flip vertically                              |
+| `mode`           | `setMode`           | `'draw' \| 'move'` | Interaction mode (`draw` or `move`)          |
+| `lineColor`      | `setLineColor`      | `string`           | Drawing line color                           |
+| `lineWidth`      | `setLineWidth`      | `number`           | Drawing line width                           |
 
-	/**
-	 * Initial zoom level (default: 1).
-	 */
-	defaultZoom?: number;
+#### 🛠 Utility Functions
 
-	/**
-	 * Initial rotation angle in degrees (default: 0).
-	 */
-	defaultRotate?: number;
-}
-```
+| Function              | Type                    | Description                                |
+|-----------------------|-------------------------|--------------------------------------------|
+| `handleZoomIn`         | `() => void`            | Zoom in                                    |
+| `handleZoomOut`        | `() => void`            | Zoom out                                   |
+| `resetFilters`         | `() => void`            | Reset all filters and transformations      |
+| `downloadImage`        | `() => void`            | Download current canvas as an image        |
+| `generateEditedFile`   | `() => Promise<File>`   | Returns the edited canvas as a File object |
 
-### Return Fields
+#### 🖱 Event Handlers
 
-```ts
-// Expose the necessary state and handlers for external use.
+| Function             | Type                  | Description         |
+|----------------------|-----------------------|---------------------|
+| `handlePointerDown`  | `PointerEventHandler` | Used for drawing    |
+| `handlePointerUp`    | `PointerEventHandler` | Used for drawing    |
+| `handlePointerMove`  | `PointerEventHandler` | Used for drawing    |
+| `handleWheel`        | `WheelEventHandler`   | Used for zooming    |
 
-return {
-	/** Reference to the canvas element. */
-	canvasRef,
 
-	/** Source URL of the image being edited. */
-	imageSrc,
+## 🤝 Contributing
 
-	/** Current brightness level. */
-	brightness,
+Contributions to `react-photo-editor` are welcome! If you have any issues, feature requests, or improvements, please open an issue or submit a pull request on the [GitHub repository](https://github.com/musama619/react-photo-editor).
 
-	/** Current contrast level. */
-	contrast,
+### How to Contribute
 
-	/** Current saturation level. */
-	saturate,
-
-	/** Current grayscale level. */
-	grayscale,
-
-	/** Current rotation angle in degrees. */
-	rotate,
-
-	/** Flag indicating if the image is flipped horizontally. */
-	flipHorizontal,
-
-	/** Flag indicating if the image is flipped vertically. */
-	flipVertical,
-
-	/** Current zoom level. */
-	zoom,
-
-	/** Flag indicating if the image is being dragged. */
-	isDragging,
-
-	/** Starting coordinates for panning. */
-	panStart,
-
-	/** Current horizontal offset for panning. */
-	offsetX,
-
-	/** Current vertical offset for panning. */
-	offsetY,
-
-	/** Function to set the brightness level. */
-	setBrightness,
-
-	/** Function to set the contrast level. */
-	setContrast,
-
-	/** Function to set the saturation level. */
-	setSaturate,
-
-	/** Function to set the grayscale level. */
-	setGrayscale,
-
-	/** Function to set the rotation angle. */
-	setRotate,
-
-	/** Function to set the horizontal flip state. */
-	setFlipHorizontal,
-
-	/** Function to set the vertical flip state. */
-	setFlipVertical,
-
-	/** Function to set the zoom level. */
-	setZoom,
-
-	/** Function to set the dragging state. */
-	setIsDragging,
-
-	/** Function to set the starting coordinates for panning. */
-	setPanStart,
-
-	/** Function to set the horizontal offset for panning. */
-	setOffsetX,
-
-	/** Function to set the vertical offset for panning. */
-	setOffsetY,
-
-	/** Function to zoom in. */
-	handleZoomIn,
-
-	/** Function to zoom out. */
-	handleZoomOut,
-
-	/** Function to handle pointer-down events. */
-	handlePointerDown,
-
-	/** Function to handle pointer-up events. */
-	handlePointerUp,
-
-	/** Function to handle pointer move events. */
-	handlePointerMove,
-
-	/** Function to handle wheel events for zooming. */
-	handleWheel,
-
-	/** Function to download the edited image. */
-	downloadImage,
-
-	/** Function to generate the edited image file. */
-	generateEditedFile,
-
-	/** Function to reset filters and styles to default. */
-	resetFilters,
-
-	/** Function to apply filters and transformations. */
-	applyFilter,
-};
-```
-
-This hook is ideal for developers looking to create a custom photo editing experience with full control over the image editing parameters and interactions.
-
-## Contributing
-
-Contributions to `react-photo-editor` are welcome! If you have any issues, feature requests, or improvements, please open an issue or submit a pull request on the [GitHub repository](https://github.com/musama619/react-photo-editor). Your feedback and support are highly appreciated!
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a pull request
 
 ### Reporting Issues
 
-If you encounter any problems while using the library, please open an issue on GitHub. Provide as much detail as possible, including steps to reproduce the issue and any relevant code or screenshots.
+When reporting issues, please provide:
+- A clear description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Screenshots if applicable
+- Environment details (browser, OS, etc.)
 
-### Feature Requests
+## 📄 License
 
-Have an idea for a new feature? Please open an issue with a detailed description of the feature you'd like to see, and why it would be useful.
-
-Thank you for your interest in contributing to `react-photo-editor`!
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/musama619/react-photo-editor/blob/main/LICENSE) file for details.

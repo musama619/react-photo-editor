@@ -7,7 +7,14 @@
 
 # react-photo-editor
 
-React component for image editing with options to set **brightness**, **contrast**, **saturation**, and **grayscale**. Also with features to **rotate**, **flip**, **pan** and **zoom** the photo.
+React component for image editing with options to set **brightness**, **contrast**, **saturation**, and **grayscale**. Also with features to **rotate**, **flip**, **pan**, **draw**, and **zoom** the photo.
+
+### Migrating from v2.x to v3.0.0
+
+#### ⚠️ Breaking Changes
+
+- **CSS Import Removed**: The CSS file previously imported with `import 'react-photo-editor/dist/style.css'` is no longer required and won't be found if referenced.
+- **Tailwind CSS Configuration**: No longer need to add `'./node_modules/react-photo-editor/dist/*.js'` to your Tailwind config.
 
 ## Installation
 

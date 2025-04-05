@@ -9,7 +9,7 @@
   <a href="https://www.npmjs.com/package/react-photo-editor">
     <img src="https://img.shields.io/npm/dm/react-photo-editor.svg" alt="NPM Downloads" />
   </a>
-  <a href="https://bundlephobia.com/package/react-photo-editor">
+  <a href="https://bundlephobia.com/package/react-photo-editor@3.0.0">
     <img src="https://img.shields.io/bundlephobia/minzip/react-photo-editor" alt="Bundle Size" />
   </a>
   <a href="https://github.com/musama619/react-photo-editor/blob/main/LICENSE">

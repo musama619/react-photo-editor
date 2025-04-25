@@ -201,6 +201,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
                       height: canvasHeight ?? 'auto',
                       maxHeight: maxCanvasHeight ?? '22rem',
                       maxWidth: maxCanvasWidth ?? '36rem',
+                      touchAction: 'none',
                     }}
                     className={`rpe-canvas rpe-touch-none rpe-border dark:rpe-border-gray-700 rpe-object-fill rpe-mx-auto 
 											${

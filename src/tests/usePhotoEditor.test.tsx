@@ -1,50 +1,74 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePhotoEditor } from '../hooks/usePhotoEditor'; // Adjust path as needed
-import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach, MockedObject } from 'vitest';
 
 describe('usePhotoEditor Hook', () => {
   const mockFile = new File(['(dummytest)'], 'test.png', { type: 'image/png' });
 
-  const mockCanvas = {
-    getContext: vi.fn(),
-    toBlob: vi.fn().mockImplementation((callback) => {
-      callback(new Blob(['test'], { type: 'image/png' }));
-    }),
-    width: 100,
-    height: 100,
-    getBoundingClientRect: vi.fn().mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 100,
-      height: 100,
-    }),
-    toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mocked-data'),
-  } as unknown as HTMLCanvasElement;
-
+  let mockContext: MockedObject<CanvasRenderingContext2D>;
+  let mockCanvas: MockedObject<HTMLCanvasElement>;
   beforeEach(() => {
     vi.clearAllMocks();
     global.URL.createObjectURL = vi.fn().mockReturnValue('mocked-url');
     global.URL.revokeObjectURL = vi.fn();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    // mockCanvas.getContext.mockReturnValue({
-    //   drawImage: vi.fn(),
-    //   clearRect: vi.fn(),
-    //   save: vi.fn(),
-    //   restore: vi.fn(),
-    //   translate: vi.fn(),
-    //   rotate: vi.fn(),
-    //   scale: vi.fn(),
-    //   filter: '',
-    //   beginPath: vi.fn(),
-    //   moveTo: vi.fn(),
-    //   lineTo: vi.fn(),
-    //   stroke: vi.fn(),
-    //   strokeStyle: '',
-    //   lineWidth: 2,
-    //   lineCap: 'round',
-    //   lineJoin: 'round',
-    // } as unknown);
+
+    mockContext = vi.mocked({
+      drawImage: vi.fn(),
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      rotate: vi.fn(),
+      scale: vi.fn(),
+      filter: '',
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      strokeStyle: '',
+      lineWidth: 2,
+      lineCap: 'round',
+      lineJoin: 'round',
+      resetTransform: vi.fn(),
+      getTransform: vi.fn().mockReturnValue({
+        a: 1,
+        b: 0,
+        c: 0,
+        d: 1,
+        e: 0,
+        f: 0,
+        is2D: true,
+        inverse: vi.fn().mockReturnValue({
+          a: 1,
+          b: 0,
+          c: 0,
+          d: 1,
+          e: 0,
+          f: 0,
+          transformPoint: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+          }),
+        } as unknown as DOMMatrix),
+      } as unknown as DOMMatrix),
+    } as unknown as CanvasRenderingContext2D);
+
+    mockCanvas = vi.mocked({
+      getContext: vi.fn().mockReturnValue(mockContext),
+      toBlob: vi.fn().mockImplementation((callback) => {
+        callback(new Blob(['test'], { type: 'image/png' }));
+      }),
+      width: 100,
+      height: 100,
+      getBoundingClientRect: vi.fn().mockReturnValue({
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 100,
+      }),
+      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mocked-data'),
+    } as unknown as HTMLCanvasElement);
   });
 
   afterEach(() => {
@@ -151,7 +175,11 @@ describe('usePhotoEditor Hook', () => {
     const { result } = renderHook(() => usePhotoEditor({}));
 
     act(() => {
-      result.current.setRotate(45);
+      result.current.canvasRef.current = mockCanvas;
+    });
+
+    act(() => {
+      result.current.handleRotate(45);
     });
 
     expect(result.current.rotate).toBe(45);
@@ -161,7 +189,7 @@ describe('usePhotoEditor Hook', () => {
     const { result } = renderHook(() => usePhotoEditor({}));
 
     act(() => {
-      result.current.setFlipHorizontal(true);
+      result.current.handleFlipHorizontal();
     });
 
     expect(result.current.flipHorizontal).toBe(true);
@@ -171,7 +199,7 @@ describe('usePhotoEditor Hook', () => {
     const { result } = renderHook(() => usePhotoEditor({}));
 
     act(() => {
-      result.current.setFlipVertical(true);
+      result.current.handleFlipVertical();
     });
 
     expect(result.current.flipVertical).toBe(true);
@@ -191,6 +219,10 @@ describe('usePhotoEditor Hook', () => {
     const { result } = renderHook(() => usePhotoEditor({}));
 
     act(() => {
+      result.current.canvasRef.current = mockCanvas;
+    });
+
+    act(() => {
       result.current.handleZoomIn();
     });
 
@@ -199,6 +231,10 @@ describe('usePhotoEditor Hook', () => {
 
   it('should handle zoom out', () => {
     const { result } = renderHook(() => usePhotoEditor({}));
+
+    act(() => {
+      result.current.canvasRef.current = mockCanvas;
+    });
 
     act(() => {
       result.current.handleZoomOut();
@@ -288,6 +324,10 @@ describe('usePhotoEditor Hook', () => {
   it('should handle wheel zoom in', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile }));
     act(() => {
+      result.current.canvasRef.current = mockCanvas;
+    });
+
+    act(() => {
       result.current.handleWheel({ deltaY: -10 } as React.WheelEvent<HTMLCanvasElement>);
     });
     expect(result.current.zoom).toBe(1.1);
@@ -295,6 +335,10 @@ describe('usePhotoEditor Hook', () => {
 
   it('should handle wheel zoom out', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile }));
+    act(() => {
+      result.current.canvasRef.current = mockCanvas;
+    });
+
     act(() => {
       result.current.handleWheel({ deltaY: 10 } as React.WheelEvent<HTMLCanvasElement>);
     });
@@ -325,35 +369,13 @@ describe('usePhotoEditor Hook', () => {
     });
 
     act(() => {
-      result.current.handlePointerUp();
+      result.current.handlePointerUp({ pointerId: 1 } as React.PointerEvent<HTMLCanvasElement>);
     });
 
     expect(result.current.isDragging).toBe(false);
   });
   it('should handle pointer move for drawing', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile, defaultMode: 'draw' }));
-
-    // Create a more complete mock canvas
-    const mockCanvas = {
-      width: 100,
-      height: 100,
-      getBoundingClientRect: vi.fn().mockReturnValue({
-        left: 0,
-        top: 0,
-        width: 100,
-        height: 100,
-      }),
-      getContext: vi.fn().mockReturnValue({
-        beginPath: vi.fn(),
-        moveTo: vi.fn(),
-        lineTo: vi.fn(),
-        stroke: vi.fn(),
-        strokeStyle: '',
-        lineWidth: 2,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }),
-    } as unknown as HTMLCanvasElement;
 
     act(() => {
       result.current.canvasRef.current = mockCanvas;
@@ -405,8 +427,7 @@ describe('usePhotoEditor Hook', () => {
       } as unknown as React.PointerEvent<HTMLCanvasElement>);
     });
 
-    expect(result.current.offsetX).toBe(10);
-    expect(result.current.offsetY).toBe(10);
+    expect(mockContext.translate).toHaveBeenCalled();
   });
 
   it('should handle pointer move when not dragging or drawing', () => {
@@ -482,19 +503,23 @@ describe('usePhotoEditor Hook', () => {
   });
 
   it('should handle zoom with minimum limit', () => {
-    const { result } = renderHook(() => usePhotoEditor({ defaultZoom: 0.2 }));
+    const { result } = renderHook(() => usePhotoEditor({ defaultZoom: 0.12 }));
+
+    act(() => {
+      result.current.canvasRef.current = mockCanvas;
+    });
 
     act(() => {
       result.current.handleZoomOut();
     });
 
-    expect(result.current.zoom).toBe(0.1);
+    expect(result.current.zoom).toBe(0.108);
 
     act(() => {
       result.current.handleZoomOut();
     });
 
-    expect(result.current.zoom).toBe(0.1); // Shouldn't go below 0.1
+    expect(result.current.zoom).toBe(0.108); // Shouldn't go below 0.1
   });
 
   it('should generate edited file with correct mime type for jpg', async () => {

@@ -503,11 +503,14 @@ export const usePhotoEditor = ({
     const centerX = (canvasRef.current?.width ?? 0) / 2;
     const centerY = (canvasRef.current?.height ?? 0) / 2;
 
+    // Reset rotation
     context.translate(centerX, centerY);
     context.rotate(-angle)
     context.translate(-centerX, -centerY);
+    // Apply horizontal flip
     context.translate(canvasRef.current?.width ?? 0, 0);
     context.scale(-1, 1);
+    // Rotate back
     context.translate(centerX, centerY);
     context.rotate(angle)
     context.translate(-centerX, -centerY);
@@ -527,11 +530,14 @@ export const usePhotoEditor = ({
     const centerX = (canvasRef.current?.width ?? 0) / 2;
     const centerY = (canvasRef.current?.height ?? 0) / 2;
 
+    // Reset rotation
     context.translate(centerX, centerY);
     context.rotate(-angle)
     context.translate(-centerX, -centerY);
+    // Apply vertical flip
     context.translate(0, canvasRef.current?.height ?? 0);
     context.scale(1, -1);
+    // Rotate back
     context.translate(centerX, centerY);
     context.rotate(angle)
     context.translate(-centerX, -centerY);

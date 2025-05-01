@@ -149,6 +149,16 @@ export const usePhotoEditor = ({
       // Redraw image and drawing paths with current transformations
       context.drawImage(imgRef.current, 0, 0);
       redrawDrawingPaths();
+
+      context.beginPath();
+      context.fillStyle = '#00ff00';
+      context.arc(0,0,10,0,2*Math.PI);
+      context.fill();
+
+      context.beginPath();
+      context.fillStyle = '#ff0000';
+      context.arc(canvasRef.current.width / 2,canvasRef.current.height / 2,10,0,2*Math.PI);
+      context.fill();
     }
   }, [imageSrc]);
 
@@ -499,8 +509,18 @@ export const usePhotoEditor = ({
     const context = canvasRef.current?.getContext('2d');
     if (context == null) return;
 
+    const angle = (rotate * Math.PI) / 180;
+    const centerX = (canvasRef.current?.width ?? 0) / 2;
+    const centerY = (canvasRef.current?.height ?? 0) / 2;
+
+    context.translate(centerX, centerY);
+    context.rotate(-angle)
+    context.translate(-centerX, -centerY);
     context.translate(canvasRef.current?.width ?? 0, 0);
     context.scale(-1, 1);
+    context.translate(centerX, centerY);
+    context.rotate(angle)
+    context.translate(-centerX, -centerY);
     reDraw();
   };
 
@@ -513,8 +533,18 @@ export const usePhotoEditor = ({
     const context = canvasRef.current?.getContext('2d');
     if (context == null) return;
 
+    const angle = (rotate * Math.PI) / 180;
+    const centerX = (canvasRef.current?.width ?? 0) / 2;
+    const centerY = (canvasRef.current?.height ?? 0) / 2;
+
+    context.translate(centerX, centerY);
+    context.rotate(-angle)
+    context.translate(-centerX, -centerY);
     context.translate(0, canvasRef.current?.height ?? 0);
     context.scale(1, -1);
+    context.translate(centerX, centerY);
+    context.rotate(angle)
+    context.translate(-centerX, -centerY);
     reDraw();
   };
 

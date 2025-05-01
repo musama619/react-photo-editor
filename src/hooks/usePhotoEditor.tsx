@@ -174,7 +174,7 @@ export const usePhotoEditor = ({
   // Effect to apply transformations and filters whenever relevant state changes.
   useEffect(() => {
     applyFilter();
-  }, [rotate, brightness, contrast, saturate, grayscale]);
+  }, [brightness, contrast, saturate, grayscale]);
 
   const redrawDrawingPaths = () => {
     const context = canvasRef.current?.getContext('2d');

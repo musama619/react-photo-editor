@@ -616,6 +616,7 @@ export const usePhotoEditor = ({
     const context = canvasRef.current?.getContext('2d');
     context?.resetTransform();
     currentOrigin.current = { x: 0, y: 0 };
+    canvasInitialized.current = false;
     reDraw();
   };
 

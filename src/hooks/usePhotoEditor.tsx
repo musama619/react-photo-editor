@@ -93,7 +93,7 @@ export const usePhotoEditor = ({
 }: UsePhotoEditorParams) => {
   // Ref to the canvas element where the image will be drawn.
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const canvasInitialized = useRef(false);
 
   // Create the image object using a ref
   const imgRef = useRef(new Image());
@@ -114,8 +114,6 @@ export const usePhotoEditor = ({
   // State variables for handling drag-and-drop panning.
   const [isDragging, setIsDragging] = useState(false);
   const prevPanPosition = useRef<{ x: number; y: number } | null>(null);
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
 
   const [mode, setMode] = useState<'draw' | 'pan'>(defaultMode);
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
@@ -133,22 +131,23 @@ export const usePhotoEditor = ({
 
   const reDraw = useCallback(() => {
     if (imageSrc && canvasRef.current != null) {
-      if (contextRef.current == null) {
-        // Initial setup
-        contextRef.current = canvasRef.current.getContext('2d');
-        // Set canvas dimensions to match the image.
+      const context = canvasRef.current.getContext('2d');
+      if (context == null) return;
+
+      if (!canvasInitialized.current) {
         canvasRef.current.width = imgRef.current.width;
         canvasRef.current.height = imgRef.current.height;
-        // draw image when ready
-        imgRef.current.onload = reDraw;
+        canvasInitialized.current = true;
       }
 
-      contextRef.current?.save();
-      contextRef.current?.resetTransform();
-      contextRef.current?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      contextRef.current?.restore();
+      // Clear the canvas before redrawing
+      context.save();
+      context.resetTransform();
+      context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      context.restore();
 
-      contextRef.current?.drawImage(imgRef.current, 0, 0);
+      // Redraw image and drawing paths with current transformations
+      context.drawImage(imgRef.current, 0, 0);
       redrawDrawingPaths();
     }
   }, [imageSrc]);
@@ -158,6 +157,7 @@ export const usePhotoEditor = ({
     if (file) {
       const fileSrc = URL.createObjectURL(file);
       imgRef.current.src = fileSrc;
+      imgRef.current.onload = reDraw;
       setImageSrc(fileSrc);
 
       // Clean up the object URL when the component unmounts or file changes.
@@ -166,6 +166,7 @@ export const usePhotoEditor = ({
       };
     } else if (src) {
       imgRef.current.src = src;
+      imgRef.current.onload = reDraw;
       setImageSrc(src);
     }
   }, [file, src]);
@@ -176,22 +177,24 @@ export const usePhotoEditor = ({
   }, [rotate, brightness, contrast, saturate, grayscale]);
 
   const redrawDrawingPaths = () => {
-    if (contextRef.current == null) return;
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null) return;
+
     drawingPathsRef.current.forEach(({ path, color, width }) => {
-      contextRef.current!.beginPath();
-      contextRef.current!.strokeStyle = color;
-      contextRef.current!.lineWidth = width;
-      contextRef.current!.lineCap = 'round';
-      contextRef.current!.lineJoin = 'round';
+      context.beginPath();
+      context.strokeStyle = color;
+      context.lineWidth = width;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
 
       path.forEach((point, index) => {
         if (index === 0) {
-          contextRef.current!.moveTo(point.x, point.y);
+          context.moveTo(point.x, point.y);
         } else {
-          contextRef.current!.lineTo(point.x, point.y);
+          context.lineTo(point.x, point.y);
         }
       });
-      contextRef.current!.stroke();
+      context.stroke();
     });
   };
 
@@ -199,11 +202,14 @@ export const usePhotoEditor = ({
    * Applies the selected filters and transformations to the image on the canvas.
    */
   const applyFilter = () => {
-    if (canvasRef.current != null && contextRef.current != null) {
-      // Apply filters and transformations.
-      contextRef.current.filter = getFilterString();
-      reDraw();
-    }
+    if (!imageSrc) return;
+
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null) return;
+
+    // Apply filters and transformations.
+    context.filter = getFilterString();
+    reDraw();
   };
 
   /**
@@ -282,38 +288,41 @@ export const usePhotoEditor = ({
    * @param position - The pointer clientX and clientY.
    */
   const handleZoom = (value: number, position?: { x: number; y: number }) => {
-    if (canvasRef.current != null && contextRef.current != null) {
-      let scaleFactor = 1 + value;
+    if (canvasRef.current == null) return;
 
-      if (zoom * scaleFactor < 0.1) {
-        // Prevent zooming out too much
-        scaleFactor = 1;
-      }
-      const newZoom = zoom * scaleFactor;
-      setZoom(newZoom);
+    let scaleFactor = 1 + value;
 
-      let translateX;
-      let translateY;
-      if (position != null) {
-        const transformedPoint = getCanvasPositionFromPointer(position.x, position.y);
-
-        if (transformedPoint == null) return;
-
-        // Translate to the transformed position of the pointer
-        translateX = transformedPoint.x;
-        translateY = transformedPoint.y;
-      } else {
-        // Translate to the center of the canvas
-        translateX = canvasRef.current.width / 2;
-        translateY = canvasRef.current.height / 2;
-      }
-
-      contextRef.current.translate(translateX, translateY);
-      contextRef.current.scale(scaleFactor, scaleFactor);
-      // translate back to the current origin
-      contextRef.current.translate(-translateX, -translateY);
-      reDraw();
+    if (zoom * scaleFactor < 0.1) {
+      // Prevent zooming out too much
+      scaleFactor = 1;
     }
+    const newZoom = zoom * scaleFactor;
+    setZoom(newZoom);
+
+    let translateX;
+    let translateY;
+    if (position != null) {
+      const transformedPoint = getCanvasPositionFromPointer(position.x, position.y);
+
+      if (transformedPoint == null) return;
+
+      // Translate to the transformed position of the pointer
+      translateX = transformedPoint.x;
+      translateY = transformedPoint.y;
+    } else {
+      // Translate to the center of the canvas
+      translateX = canvasRef.current.width / 2;
+      translateY = canvasRef.current.height / 2;
+    }
+
+    const context = canvasRef.current.getContext('2d');
+    if (context == null) return;
+
+    context.translate(translateX, translateY);
+    context.scale(scaleFactor, scaleFactor);
+    // translate back to the current origin
+    context.translate(-translateX, -translateY);
+    reDraw();
   };
 
   /**
@@ -339,9 +348,7 @@ export const usePhotoEditor = ({
       });
     } else {
       setIsDragging(true);
-      const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
-      const initialY = event.clientY - (flipVertical ? -offsetY : offsetY);
-      prevPanPosition.current = { x: initialX, y: initialY };
+      prevPanPosition.current = { x: event.clientX, y: event.clientY };
     }
   };
 
@@ -349,8 +356,6 @@ export const usePhotoEditor = ({
    * Handles the pointer move event for updating the drawing path or panning the image.
    */
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (canvasRef.current == null || contextRef.current == null) return;
-
     // Find this event in the cache and update its record with this event
     const index = pointerEvents.current.findIndex(
       (cachedEv) => cachedEv.pointerId === event.pointerId
@@ -372,22 +377,23 @@ export const usePhotoEditor = ({
   };
 
   const draw = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (contextRef.current == null || !drawStart) return;
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null || !drawStart) return;
 
     const transformedPosition = getCanvasPositionFromPointer(event.clientX, event.clientY);
     if (transformedPosition == null) return;
 
     const currentPath = drawingPathsRef.current[drawingPathsRef.current.length - 1].path;
 
-    contextRef.current.strokeStyle = lineColor;
-    contextRef.current.lineWidth = lineWidth;
-    contextRef.current.lineCap = 'round';
-    contextRef.current.lineJoin = 'round';
+    context.strokeStyle = lineColor;
+    context.lineWidth = lineWidth;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
 
-    contextRef.current.beginPath();
-    contextRef.current.moveTo(drawStart.x, drawStart.y);
-    contextRef.current.lineTo(transformedPosition.x, transformedPosition.y);
-    contextRef.current.stroke();
+    context.beginPath();
+    context.moveTo(drawStart.x, drawStart.y);
+    context.lineTo(transformedPosition.x, transformedPosition.y);
+    context.stroke();
 
     setDrawStart({ x: transformedPosition.x, y: transformedPosition.y });
     currentPath.push({ x: transformedPosition.x, y: transformedPosition.y });
@@ -396,6 +402,9 @@ export const usePhotoEditor = ({
   };
 
   const pan = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null) return;
+
     if (prevPanPosition.current == null) return;
 
     let offsetXDelta = (event.clientX - prevPanPosition.current.x) * (flipHorizontal ? -1 : 1);
@@ -414,8 +423,7 @@ export const usePhotoEditor = ({
     offsetXDelta = rotatedOffsetX;
     offsetYDelta = rotatedOffsetY;
 
-
-    contextRef.current?.translate(offsetXDelta, offsetYDelta);
+    context.translate(offsetXDelta, offsetYDelta);
     reDraw();
     prevPanPosition.current = { x: event.clientX, y: event.clientY };
     currentOrigin.current = {
@@ -488,8 +496,11 @@ export const usePhotoEditor = ({
   const handleFlipHorizontal = () => {
     setFlipHorizontal((prev) => !prev);
 
-    contextRef.current?.translate(canvasRef.current?.width ?? 0, 0);
-    contextRef.current?.scale(-1, 1);
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null) return;
+
+    context.translate(canvasRef.current?.width ?? 0, 0);
+    context.scale(-1, 1);
     reDraw();
   };
 
@@ -499,8 +510,11 @@ export const usePhotoEditor = ({
   const handleFlipVertical = () => {
     setFlipVertical((prev) => !prev);
 
-    contextRef.current?.translate(0, canvasRef.current?.height ?? 0);
-    contextRef.current?.scale(1, -1);
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null) return;
+
+    context.translate(0, canvasRef.current?.height ?? 0);
+    context.scale(1, -1);
     reDraw();
   };
 
@@ -509,17 +523,20 @@ export const usePhotoEditor = ({
    * @param angle - The angle in degrees to rotate the image.
    */
   const handleRotate = (angle: number) => {
-    if (canvasRef.current == null || contextRef.current == null) return;
+    setRotate(angle);
+
+    if (canvasRef.current == null) return;
+
+    const context = canvasRef.current.getContext('2d');
+    if (context == null) return;
 
     const diff = angle - rotate;
 
     const centerX = canvasRef.current.width / 2;
     const centerY = canvasRef.current.height / 2;
-    contextRef.current?.translate(centerX, centerY);
-    contextRef.current?.rotate((diff * Math.PI) / 180);
-    contextRef.current?.translate(-centerX, -centerY);
-
-    setRotate(angle);
+    context.translate(centerX, centerY);
+    context.rotate((diff * Math.PI) / 180);
+    context.translate(-centerX, -centerY);
   };
 
   /**
@@ -528,6 +545,9 @@ export const usePhotoEditor = ({
    * @param clientY - The y-coordinate of the pointer. (event.clientY)
    */
   const getCanvasPositionFromPointer = (clientX: number, clientY: number) => {
+    const context = canvasRef.current?.getContext('2d');
+    if (context == null) return;
+
     const rect = canvasRef.current?.getBoundingClientRect();
 
     const projectedX = clientX - (rect?.left ?? 0);
@@ -539,7 +559,7 @@ export const usePhotoEditor = ({
     const x = projectedX * scaleX; // scale mouse coordinates after they have
     const y = projectedY * scaleY; // been adjusted to be relative to element
 
-    const inverseMatrix = contextRef.current?.getTransform().inverse();
+    const inverseMatrix = context.getTransform().inverse();
     return inverseMatrix?.transformPoint({ x, y });
   };
 
@@ -558,13 +578,13 @@ export const usePhotoEditor = ({
     setLineColor(defaultLineColor);
     setLineWidth(defaultLineWidth);
     drawingPathsRef.current = [];
-    setOffsetX(0);
-    setOffsetY(0);
     prevPanPosition.current = null;
     setIsDragging(false);
     setMode('pan');
     // applyFilter();
-    contextRef.current?.resetTransform();
+
+    const context = canvasRef.current?.getContext('2d');
+    context?.resetTransform();
     currentOrigin.current = { x: 0, y: 0 };
     reDraw();
   };
@@ -595,10 +615,6 @@ export const usePhotoEditor = ({
     isDragging,
     /** Starting coordinates for panning. */
     panStart: prevPanPosition,
-    /** Current horizontal offset for panning. */
-    offsetX,
-    /** Current vertical offset for panning. */
-    offsetY,
     /** Current mode ('pan' or 'draw') */
     mode,
     /** Current line color. */
@@ -623,10 +639,6 @@ export const usePhotoEditor = ({
     setZoom,
     /** Function to set the dragging state. */
     setIsDragging,
-    /** Function to set the horizontal offset for panning. */
-    setOffsetX,
-    /** Function to set the vertical offset for panning. */
-    setOffsetY,
     /** Function to zoom in. */
     handleZoomIn,
     /** Function to zoom out. */

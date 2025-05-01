@@ -148,21 +148,10 @@ export const usePhotoEditor = ({
       contextRef.current?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       contextRef.current?.restore();
 
-      contextRef.current?.save();
-
-      // apply rotation after everything else, then reset
-      if (rotate) {
-        const centerX = canvasRef.current.width / 2;
-        const centerY = canvasRef.current.height / 2;
-        contextRef.current?.translate(centerX, centerY);
-        contextRef.current?.rotate((rotate * Math.PI) / 180);
-        contextRef.current?.translate(-centerX, -centerY);
-      }
       contextRef.current?.drawImage(imgRef.current, 0, 0);
       redrawDrawingPaths();
-      contextRef.current?.restore();
     }
-  }, [imageSrc, rotate]);
+  }, [imageSrc]);
 
   // Effect to update the image source when the file changes.
   useEffect(() => {
@@ -416,6 +405,16 @@ export const usePhotoEditor = ({
     offsetXDelta /= zoom;
     offsetYDelta /= zoom;
 
+    // Apply rotation (need to subtract rotate from 360 for clockwise)
+    const angle = ((360 - rotate) * Math.PI) / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const rotatedOffsetX = offsetXDelta * cos - offsetYDelta * sin;
+    const rotatedOffsetY = offsetXDelta * sin + offsetYDelta * cos;
+    offsetXDelta = rotatedOffsetX;
+    offsetYDelta = rotatedOffsetY;
+
+
     contextRef.current?.translate(offsetXDelta, offsetYDelta);
     reDraw();
     prevPanPosition.current = { x: event.clientX, y: event.clientY };
@@ -511,6 +510,15 @@ export const usePhotoEditor = ({
    */
   const handleRotate = (angle: number) => {
     if (canvasRef.current == null || contextRef.current == null) return;
+
+    const diff = angle - rotate;
+
+    const centerX = canvasRef.current.width / 2;
+    const centerY = canvasRef.current.height / 2;
+    contextRef.current?.translate(centerX, centerY);
+    contextRef.current?.rotate((diff * Math.PI) / 180);
+    contextRef.current?.translate(-centerX, -centerY);
+
     setRotate(angle);
   };
 

@@ -187,7 +187,7 @@ export const usePhotoEditor = ({
   }, [rotate, brightness, contrast, saturate, grayscale]);
 
   const redrawDrawingPaths = () => {
-    if (contextRef.current == null) return
+    if (contextRef.current == null) return;
     drawingPathsRef.current.forEach(({ path, color, width }) => {
       contextRef.current!.beginPath();
       contextRef.current!.strokeStyle = color;
@@ -214,7 +214,6 @@ export const usePhotoEditor = ({
       // Apply filters and transformations.
       contextRef.current.filter = getFilterString();
       reDraw();
-      // redrawDrawingPaths(context);
     }
   };
 
@@ -307,7 +306,6 @@ export const usePhotoEditor = ({
       let translateX;
       let translateY;
       if (position != null) {
-
         const transformedPoint = getCanvasPositionFromPointer(position.x, position.y);
 
         if (transformedPoint == null) return;
@@ -345,7 +343,11 @@ export const usePhotoEditor = ({
 
       setDrawStart({ x: transformedPosition.x, y: transformedPosition.y });
 
-      drawingPathsRef.current.push({ path: [{ x: transformedPosition.x, y: transformedPosition.y }], color: lineColor, width: lineWidth });
+      drawingPathsRef.current.push({
+        path: [{ x: transformedPosition.x, y: transformedPosition.y }],
+        color: lineColor,
+        width: lineWidth,
+      });
     } else {
       setIsDragging(true);
       const initialX = event.clientX - (flipHorizontal ? -offsetX : offsetX);
@@ -360,82 +362,96 @@ export const usePhotoEditor = ({
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (canvasRef.current == null || contextRef.current == null) return;
 
-
     // Find this event in the cache and update its record with this event
     const index = pointerEvents.current.findIndex(
       (cachedEv) => cachedEv.pointerId === event.pointerId
     );
     pointerEvents.current[index] = event;
 
-    if (mode === 'draw' && drawStart) {
-      // Draw
-      const transformedPosition = getCanvasPositionFromPointer(event.clientX, event.clientY);
-      if (transformedPosition == null) return;
-
-      const currentPath = drawingPathsRef.current[drawingPathsRef.current.length - 1].path;
-
-      contextRef.current.strokeStyle = lineColor;
-      contextRef.current.lineWidth = lineWidth;
-      contextRef.current.lineCap = 'round';
-      contextRef.current.lineJoin = 'round';
-
-      contextRef.current.beginPath();
-      contextRef.current.moveTo(drawStart.x, drawStart.y);
-      contextRef.current.lineTo(transformedPosition.x, transformedPosition.y);
-      contextRef.current.stroke();
-
-      setDrawStart({ x: transformedPosition.x, y: transformedPosition.y });
-      currentPath.push({ x: transformedPosition.x, y: transformedPosition.y });
-
-      return;
-    }
-
-    if (isDragging && prevPanPosition) {
+    if (mode === 'draw') {
+      draw(event);
+    } else if (isDragging) {
       event.preventDefault();
 
-      if (pointerEvents.current.length === 1 && prevPanPosition.current != null) {
-        // Pan
-        const offsetXDelta =
-          (event.clientX - prevPanPosition.current.x) * (flipHorizontal ? -1 : 1);
-        const offsetYDelta = (event.clientY - prevPanPosition.current.y) * (flipVertical ? -1 : 1);
-
-        contextRef.current?.translate(offsetXDelta, offsetYDelta);
-        reDraw();
-        prevPanPosition.current = { x: event.clientX, y: event.clientY };
-        currentOrigin.current = {
-          x: currentOrigin.current.x + offsetXDelta,
-          y: currentOrigin.current.y + offsetYDelta,
-        };
+      if (pointerEvents.current.length === 1) {
+        pan(event);
       } else if (pointerEvents.current.length === 2) {
-        // Pinch Zoom
         // If two pointers are down, check for pinch gestures
-        // Calculate the distance between the two pointers
-
-        const betweenTwoPointers = {
-          x: (pointerEvents.current[0].clientX + pointerEvents.current[1].clientX) / 2,
-          y: (pointerEvents.current[0].clientY + pointerEvents.current[1].clientY) / 2,
-        };
-
-        const curDiff = Math.max(
-          Math.abs(pointerEvents.current[0].clientX - pointerEvents.current[1].clientX),
-          Math.abs(pointerEvents.current[0].clientY - pointerEvents.current[1].clientY)
-        );
-
-        if (prevPointerDiff.current > 0) {
-          if (curDiff > prevPointerDiff.current) {
-            // The distance between the two pointers has increased
-            handleZoom((curDiff - prevPointerDiff.current) * 0.01, betweenTwoPointers);
-          }
-          if (curDiff < prevPointerDiff.current) {
-            // The distance between the two pointers has decreased
-            handleZoom((curDiff - prevPointerDiff.current) * 0.01, betweenTwoPointers);
-          }
-        }
-
-        // Cache the distance for the next move event
-        prevPointerDiff.current = curDiff;
+        pinchZoom();
       }
     }
+  };
+
+  const draw = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (contextRef.current == null || !drawStart) return;
+
+    const transformedPosition = getCanvasPositionFromPointer(event.clientX, event.clientY);
+    if (transformedPosition == null) return;
+
+    const currentPath = drawingPathsRef.current[drawingPathsRef.current.length - 1].path;
+
+    contextRef.current.strokeStyle = lineColor;
+    contextRef.current.lineWidth = lineWidth;
+    contextRef.current.lineCap = 'round';
+    contextRef.current.lineJoin = 'round';
+
+    contextRef.current.beginPath();
+    contextRef.current.moveTo(drawStart.x, drawStart.y);
+    contextRef.current.lineTo(transformedPosition.x, transformedPosition.y);
+    contextRef.current.stroke();
+
+    setDrawStart({ x: transformedPosition.x, y: transformedPosition.y });
+    currentPath.push({ x: transformedPosition.x, y: transformedPosition.y });
+
+    return;
+  };
+
+  const pan = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (prevPanPosition.current == null) return;
+
+    let offsetXDelta = (event.clientX - prevPanPosition.current.x) * (flipHorizontal ? -1 : 1);
+    let offsetYDelta = (event.clientY - prevPanPosition.current.y) * (flipVertical ? -1 : 1);
+
+    // Apply scale correction
+    offsetXDelta /= zoom;
+    offsetYDelta /= zoom;
+
+    contextRef.current?.translate(offsetXDelta, offsetYDelta);
+    reDraw();
+    prevPanPosition.current = { x: event.clientX, y: event.clientY };
+    currentOrigin.current = {
+      x: currentOrigin.current.x + offsetXDelta,
+      y: currentOrigin.current.y + offsetYDelta,
+    };
+  };
+
+  const pinchZoom = () => {
+    if (pointerEvents.current.length !== 2) return;
+
+    // Calculate the distance between the two pointers
+    const betweenTwoPointers = {
+      x: (pointerEvents.current[0].clientX + pointerEvents.current[1].clientX) / 2,
+      y: (pointerEvents.current[0].clientY + pointerEvents.current[1].clientY) / 2,
+    };
+
+    const curDiff = Math.max(
+      Math.abs(pointerEvents.current[0].clientX - pointerEvents.current[1].clientX),
+      Math.abs(pointerEvents.current[0].clientY - pointerEvents.current[1].clientY)
+    );
+
+    if (prevPointerDiff.current > 0) {
+      if (curDiff > prevPointerDiff.current) {
+        // The distance between the two pointers has increased
+        handleZoom((curDiff - prevPointerDiff.current) * 0.01, betweenTwoPointers);
+      }
+      if (curDiff < prevPointerDiff.current) {
+        // The distance between the two pointers has decreased
+        handleZoom((curDiff - prevPointerDiff.current) * 0.01, betweenTwoPointers);
+      }
+    }
+
+    // Cache the distance for the next move event
+    prevPointerDiff.current = curDiff;
   };
 
   /**
@@ -517,7 +533,7 @@ export const usePhotoEditor = ({
 
     const inverseMatrix = contextRef.current?.getTransform().inverse();
     return inverseMatrix?.transformPoint({ x, y });
-  }
+  };
 
   /**
    * Resets the filters and styles to its original state with the default settings.

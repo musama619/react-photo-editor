@@ -557,6 +557,7 @@ export const usePhotoEditor = ({
     context.translate(centerX, centerY);
     context.rotate((diff * Math.PI) / 180);
     context.translate(-centerX, -centerY);
+    reDraw()
   };
 
   /**

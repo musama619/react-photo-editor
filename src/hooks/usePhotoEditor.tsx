@@ -149,16 +149,6 @@ export const usePhotoEditor = ({
       // Redraw image and drawing paths with current transformations
       context.drawImage(imgRef.current, 0, 0);
       redrawDrawingPaths();
-
-      context.beginPath();
-      context.fillStyle = '#00ff00';
-      context.arc(0,0,10,0,2*Math.PI);
-      context.fill();
-
-      context.beginPath();
-      context.fillStyle = '#ff0000';
-      context.arc(canvasRef.current.width / 2,canvasRef.current.height / 2,10,0,2*Math.PI);
-      context.fill();
     }
   }, [imageSrc]);
 

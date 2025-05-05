@@ -130,7 +130,7 @@ export const usePhotoEditor = ({
   const currentOrigin = useRef({ x: 0, y: 0 });
 
   const reDraw = useCallback(() => {
-    if (imageSrc && canvasRef.current != null) {
+    if (imgRef.current.src != '' && canvasRef.current != null) {
       const context = canvasRef.current.getContext('2d');
       if (context == null) return;
 
@@ -150,14 +150,15 @@ export const usePhotoEditor = ({
       context.drawImage(imgRef.current, 0, 0);
       redrawDrawingPaths();
     }
-  }, [imageSrc]);
+  }, []);
 
   // Effect to update the image source when the file changes.
   useEffect(() => {
     if (file) {
+      canvasInitialized.current = false;
       const fileSrc = URL.createObjectURL(file);
-      imgRef.current.src = fileSrc;
       imgRef.current.onload = reDraw;
+      imgRef.current.src = fileSrc;
       setImageSrc(fileSrc);
 
       // Clean up the object URL when the component unmounts or file changes.
@@ -165,8 +166,9 @@ export const usePhotoEditor = ({
         URL.revokeObjectURL(fileSrc);
       };
     } else if (src) {
-      imgRef.current.src = src;
+      canvasInitialized.current = false;
       imgRef.current.onload = reDraw;
+      imgRef.current.src = src;
       setImageSrc(src);
     }
   }, [file, src]);

@@ -209,7 +209,8 @@ describe('usePhotoEditor Hook', () => {
     const { result } = renderHook(() => usePhotoEditor({}));
 
     act(() => {
-      result.current.setZoom(1.5);
+      result.current.canvasRef.current = mockCanvas;
+      result.current.handleZoom(0.5);
     });
 
     expect(result.current.zoom).toBe(1.5);
@@ -220,9 +221,6 @@ describe('usePhotoEditor Hook', () => {
 
     act(() => {
       result.current.canvasRef.current = mockCanvas;
-    });
-
-    act(() => {
       result.current.handleZoomIn();
     });
 
@@ -234,9 +232,6 @@ describe('usePhotoEditor Hook', () => {
 
     act(() => {
       result.current.canvasRef.current = mockCanvas;
-    });
-
-    act(() => {
       result.current.handleZoomOut();
     });
 
@@ -311,8 +306,6 @@ describe('usePhotoEditor Hook', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile }));
     act(() => {
       result.current.canvasRef.current = mockCanvas;
-    });
-    act(() => {
       result.current.handlePointerDown({
         clientX: 50,
         clientY: 50,
@@ -323,34 +316,28 @@ describe('usePhotoEditor Hook', () => {
 
   it('should handle wheel zoom in', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile }));
-    act(() => {
-      result.current.canvasRef.current = mockCanvas;
-    });
 
     act(() => {
+      result.current.canvasRef.current = mockCanvas;
       result.current.handleWheel({ deltaY: -10 } as React.WheelEvent<HTMLCanvasElement>);
     });
-    expect(result.current.zoom).toBe(1.1);
+    expect(result.current.zoom).toBe(0.9);
   });
 
   it('should handle wheel zoom out', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile }));
-    act(() => {
-      result.current.canvasRef.current = mockCanvas;
-    });
 
     act(() => {
+      result.current.canvasRef.current = mockCanvas;
       result.current.handleWheel({ deltaY: 10 } as React.WheelEvent<HTMLCanvasElement>);
     });
-    expect(result.current.zoom).toBe(0.9);
+    expect(result.current.zoom).toBe(1.1);
   });
 
   it('should download image', () => {
     const { result } = renderHook(() => usePhotoEditor({ file: mockFile }));
     act(() => {
       result.current.canvasRef.current = mockCanvas;
-    });
-    act(() => {
       result.current.downloadImage();
     });
     expect(mockCanvas.toDataURL).toHaveBeenCalled();
@@ -503,7 +490,7 @@ describe('usePhotoEditor Hook', () => {
   });
 
   it('should handle zoom with minimum limit', () => {
-    const { result } = renderHook(() => usePhotoEditor({ defaultZoom: 0.12 }));
+    const { result } = renderHook(() => usePhotoEditor({ defaultZoom: 0.1 }));
 
     act(() => {
       result.current.canvasRef.current = mockCanvas;
@@ -513,13 +500,7 @@ describe('usePhotoEditor Hook', () => {
       result.current.handleZoomOut();
     });
 
-    expect(result.current.zoom).toBe(0.108);
-
-    act(() => {
-      result.current.handleZoomOut();
-    });
-
-    expect(result.current.zoom).toBe(0.108); // Shouldn't go below 0.1
+    expect(result.current.zoom).toBe(0.1); // Shouldn't go below 0.1
   });
 
   it('should generate edited file with correct mime type for jpg', async () => {

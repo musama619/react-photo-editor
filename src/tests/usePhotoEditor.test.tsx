@@ -321,7 +321,7 @@ describe('usePhotoEditor Hook', () => {
       result.current.canvasRef.current = mockCanvas;
       result.current.handleWheel({ deltaY: -10 } as React.WheelEvent<HTMLCanvasElement>);
     });
-    expect(result.current.zoom).toBe(0.9);
+    expect(result.current.zoom).toBe(1.1);
   });
 
   it('should handle wheel zoom out', () => {
@@ -331,7 +331,7 @@ describe('usePhotoEditor Hook', () => {
       result.current.canvasRef.current = mockCanvas;
       result.current.handleWheel({ deltaY: 10 } as React.WheelEvent<HTMLCanvasElement>);
     });
-    expect(result.current.zoom).toBe(1.1);
+    expect(result.current.zoom).toBe(0.9);
   });
 
   it('should download image', () => {

@@ -480,7 +480,7 @@ export const usePhotoEditor = ({
    * Handles the wheel event for zooming in and out.
    */
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
-    handleZoom(0.01 * event.deltaY, { x: event.clientX, y: event.clientY });
+    handleZoom(0.01 * -event.deltaY, { x: event.clientX, y: event.clientY });
   };
 
   /**

@@ -292,14 +292,16 @@ export const usePhotoEditor = ({
   const handleZoom = (value: number, position?: { x: number; y: number }) => {
     if (canvasRef.current == null) return;
 
-    let scaleFactor = 1 + value;
+    let newZoom = zoom + value;
 
-    if (zoom * scaleFactor < 0.1) {
+    if (newZoom < 0.1) {
       // Prevent zooming out too much
-      scaleFactor = 1;
+      newZoom = 0.1;
     }
-    const newZoom = zoom * scaleFactor;
+
     setZoom(newZoom);
+
+    const scaleFactor = newZoom / zoom;
 
     let translateX;
     let translateY;
@@ -449,14 +451,7 @@ export const usePhotoEditor = ({
     );
 
     if (prevPointerDiff.current > 0) {
-      if (curDiff > prevPointerDiff.current) {
-        // The distance between the two pointers has increased
         handleZoom((curDiff - prevPointerDiff.current) * 0.01, betweenTwoPointers);
-      }
-      if (curDiff < prevPointerDiff.current) {
-        // The distance between the two pointers has decreased
-        handleZoom((curDiff - prevPointerDiff.current) * 0.01, betweenTwoPointers);
-      }
     }
 
     // Cache the distance for the next move event
@@ -485,11 +480,7 @@ export const usePhotoEditor = ({
    * Handles the wheel event for zooming in and out.
    */
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
-    if (event.deltaY < 0) {
-      handleZoom(0.1, { x: event.clientX, y: event.clientY });
-    } else {
-      handleZoom(-0.1, { x: event.clientX, y: event.clientY });
-    }
+    handleZoom(0.01 * event.deltaY, { x: event.clientX, y: event.clientY });
   };
 
   /**
@@ -507,14 +498,14 @@ export const usePhotoEditor = ({
 
     // Reset rotation
     context.translate(centerX, centerY);
-    context.rotate(-angle)
+    context.rotate(-angle);
     context.translate(-centerX, -centerY);
     // Apply horizontal flip
     context.translate(canvasRef.current?.width ?? 0, 0);
     context.scale(-1, 1);
     // Rotate back
     context.translate(centerX, centerY);
-    context.rotate(angle)
+    context.rotate(angle);
     context.translate(-centerX, -centerY);
     reDraw();
   };
@@ -534,14 +525,14 @@ export const usePhotoEditor = ({
 
     // Reset rotation
     context.translate(centerX, centerY);
-    context.rotate(-angle)
+    context.rotate(-angle);
     context.translate(-centerX, -centerY);
     // Apply vertical flip
     context.translate(0, canvasRef.current?.height ?? 0);
     context.scale(1, -1);
     // Rotate back
     context.translate(centerX, centerY);
-    context.rotate(angle)
+    context.rotate(angle);
     context.translate(-centerX, -centerY);
     reDraw();
   };
@@ -565,7 +556,7 @@ export const usePhotoEditor = ({
     context.translate(centerX, centerY);
     context.rotate((diff * Math.PI) / 180);
     context.translate(-centerX, -centerY);
-    reDraw()
+    reDraw();
   };
 
   /**
@@ -610,7 +601,6 @@ export const usePhotoEditor = ({
     prevPanPosition.current = null;
     setIsDragging(false);
     setMode('pan');
-    // applyFilter();
 
     const context = canvasRef.current?.getContext('2d');
     context?.resetTransform();
@@ -666,7 +656,7 @@ export const usePhotoEditor = ({
     /** Function to set the vertical flip state. */
     handleFlipVertical,
     /** Function to set the zoom level. */
-    setZoom,
+    handleZoom,
     /** Function to set the dragging state. */
     setIsDragging,
     /** Function to zoom in. */

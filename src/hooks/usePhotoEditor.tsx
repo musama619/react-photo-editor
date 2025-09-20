@@ -218,7 +218,16 @@ export const usePhotoEditor = ({
           context.scale(1, -1);
         }
 
-        context.translate(translateX + offsetX, translateY + offsetY);
+        const rotateAngle = (rotate * Math.PI) / 180;
+
+        context.translate(
+          translateX +
+            offsetX * Math.cos(rotateAngle) +
+            offsetY * Math.sin(rotateAngle),
+          translateY +
+            -offsetX * Math.sin(rotateAngle) +
+            offsetY * Math.cos(rotateAngle)
+        );
         context.scale(zoom, zoom);
         context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
 

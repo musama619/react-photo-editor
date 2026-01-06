@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Parameters for the usePhotoEditor hook.
@@ -174,7 +174,7 @@ export const usePhotoEditor = ({
   /**
    * Applies the selected filters and transformations to the image on the canvas.
    */
-  const applyFilter = () => {
+  const applyFilter = useCallback(() => {
     if (!imageSrc) return;
 
     const canvas = canvasRef.current;
@@ -182,9 +182,14 @@ export const usePhotoEditor = ({
 
     const imgElement = imgRef.current;
     imgRef.current.src = imageSrc;
-    imgRef.current.onload = applyFilter;
 
-    imgElement.onload = () => {
+    // Helper to check for native filter support
+    const isFilterSupported = (ctx: CanvasRenderingContext2D) => {
+      return 'filter' in ctx && ctx.filter !== 'none' && ctx.filter !== undefined;
+    };
+
+
+    const drawImage = () => {
       if (canvas && context) {
         const zoomedWidth = imgElement.width * zoom;
         const zoomedHeight = imgElement.height * zoom;
@@ -198,8 +203,7 @@ export const usePhotoEditor = ({
         // Clear the canvas before drawing the updated image.
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Apply filters and transformations.
-        context.filter = getFilterString();
+        // Save context state for transformations
         context.save();
 
         if (rotate) {
@@ -220,14 +224,205 @@ export const usePhotoEditor = ({
 
         context.translate(translateX + offsetX, translateY + offsetY);
         context.scale(zoom, zoom);
+
+        // If native filter is supported, use it
+        // Note: We check if setting it actually sticks or if the browser has the property
+        // Some older Safaris have the property but it doesn't work well, but generally checking 'filter' in context works for new standars
+        // However, standard checking might pass even if broken in specific ways.
+        // For consistent Safari fix, we might want to rely on the fallback if we suspect issues,
+        // but let's try to use native if available.
+        // Actually, the user report says it works in CSS but not Canvas.
+        // Let's check simply if we can use the fallback.
+        // For this specific issue, we will enforce fallback if native filter might be problematic or just use fallback if we detect we are in an environment that needs it.
+        // But the simplest reliable cross-browser way for now if native fails is manual.
+        // Let's try to set filter and see.
+        context.filter = getFilterString();
         context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
 
         context.restore();
+        
+        // Manual fallback for Safari/Browsers without Full Canvas Filter Support
+        // We can detect if filter worked or if we should apply manually. 
+        // A simple heuristic: if the browser is Safari, it often fails 'ctx.filter'.
+        // Checking `context.filter` assignment:
+        // In some browsers, assigned "invalid" or unsupported values are ignored.
+        // But `brightness(...)` is standard.
+        // If we want to be safe, we can apply manual pixels if we suspect 'filter' didn't work.
+        // However, reading back pixels is expensive.
+        // A better approach usually involves checking the User Agent or feature detection carefully.
+        // Given the prompt "Safari filters do not work", and `ctx.filter` support issues on Safari:
+        // context.filter is supported in Safari 9.1+, BUT there are known bugs.
+        // Let's implement the fallback and apply it if specifically requested or if we force it.
+        // For this task, I will apply manual filter effectively "on top" or "instead" if standard `ctx.filter` is unreliable.
+        // Since `ctx.filter = ...` resets to 'none' if unsupported values are passed, or stays 'none' if property unsupported.
+        // Let's check immediately after setting.
+
+        // Detect Safari browser (not Chrome, Chromium, or Electron)
+        // Safari user agent contains "Safari" but NOT "Chrome" or "Chromium" or "Electron"
+        // Real Safari: "Mozilla/5.0 (Macintosh; Intel Mac OS X ...) AppleWebKit/... (KHTML, like Gecko) Version/... Safari/..."
+        // Chrome/Electron: Contains "Chrome" or "Chromium" or "Electron" before "Safari"
+        const ua = navigator.userAgent.toLowerCase();
+        const isSafari = 
+          (ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium') && !ua.includes('electron')) ||
+          // Also check for Safari-specific vendor
+          (navigator.vendor && navigator.vendor.includes('Apple') && !ua.includes('chrome') && !ua.includes('chromium') && !ua.includes('electron'));
+        
+        // Allow forcing fallback for testing via URL parameter: ?forceFilterFallback=true
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceFallback = urlParams.get('forceFilterFallback') === 'true';
+        
+        console.log('environment: ', navigator.userAgent);
+        console.log('isSafari detected: ', isSafari);
+        console.log('forceFilterFallback: ', forceFallback);
+        
+        if (isSafari || forceFallback) {
+          console.log('[Safari detected or forced] Using manual filter fallback');
+          // Re-draw without context.filter to ensure we have clean base for manual processing if we are going to do manual
+          // Or we assume `context.filter` did nothing.
+          // To be safe for Safari:
+             // 1. Clear and Draw image normally (no context.filter)
+             // 2. Get ImageData
+             // 3. Manipulate pixels
+             // 4. Put ImageData
+             
+             // Redrawing cleanly:
+             context.save();
+             context.clearRect(0, 0, canvas.width, canvas.height);
+             // Re-apply transforms
+             if (rotate) {
+              const centerX = canvas.width / 2;
+              const centerY = canvas.height / 2;
+              context.translate(centerX, centerY);
+              context.rotate((rotate * Math.PI) / 180);
+              context.translate(-centerX, -centerY);
+            }
+            if (flipHorizontal) {
+              context.translate(canvas.width, 0);
+              context.scale(-1, 1);
+            }
+            if (flipVertical) {
+              context.translate(0, canvas.height);
+              context.scale(1, -1);
+            }
+            context.translate(translateX + offsetX, translateY + offsetY);
+            context.scale(zoom, zoom);
+             
+             // Draw raw image
+             context.filter = 'none';
+             context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+             context.restore();
+
+             // Apply manual filters
+             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+             applyFallbackFilters(imageData.data);
+             context.putImageData(imageData, 0, 0);
+        }
 
         context.filter = 'none';
         redrawDrawingPaths(context);
       }
     };
+
+    imgElement.onload = drawImage;
+    // Handle case where image is already loaded
+    if (imgElement.complete) {
+        drawImage();
+    }
+
+  }, [
+    imageSrc,
+    rotate,
+    flipHorizontal,
+    flipVertical,
+    zoom,
+    brightness,
+    contrast,
+    saturate,
+    grayscale,
+    offsetX,
+    offsetY,
+    lineWidth,
+    lineColor,
+  ]);
+
+  /**
+   * Manual fallback implementation for filters (Brightness, Contrast, Saturation, Grayscale)
+   */
+  const applyFallbackFilters = (data: Uint8ClampedArray) => {
+      // Constants for saturation/grayscale
+      const Rw = 0.3086;
+      const Gw = 0.6094;
+      const Bw = 0.0820;
+
+      // Factors (normalize 0..100..200 to 0..1..2 or appropriate scales)
+      // Brightness: 100 is default (1.0). 0 is black, 200 is 2x bright
+      const b = brightness / 100;
+
+      // Contrast: 100 is default. Formula often uses factor = (259 * (contrast + 255)) / (255 * (259 - contrast))
+      // But simple linear 0..2 scale used in CSS-like filters often matches:
+      // Let's approximate CSS contrast: (c - 0.5) * factor + 0.5 (if c is normalized 0..1)
+      // Standard simplified: val = (val - 128) * contrastFactor + 128
+      const c = contrast / 100;
+      const k = (259 * (c * 255 + 255)) / (255 * (259 - c * 255)); // Standard algorithm often cited, but let's stick to simple multiplier if possible or this one.
+      // Actually CSS filter contrast(%) is just a linear multiplier on RGB values, intercept at 0? 
+      // No, contrast(0%) is gray, contrast(100%) is original.
+      // Let's use: color = (color - 128) * contrast + 128
+      
+      
+      // Saturation:
+      const s = saturate / 100;
+
+      // Grayscale: 
+      const g = grayscale / 100; // 0..1
+
+      for (let i = 0; i < data.length; i += 4) {
+          let r = data[i];
+          let gVal = data[i + 1];
+          let bVal = data[i + 2];
+
+          // 1. Grayscale (if applied first or mixed? CSS order matters. Usually filters are applied in order of definition string. current getFilterString: brightness -> contrast -> grayscale -> saturate)
+          
+          // Apply Brightness
+          r *= b;
+          gVal *= b;
+          bVal *= b;
+
+          // Apply Contrast
+          // Simple formula: color = (color - 128) * c + 128
+          r = (r - 128) * c + 128;
+          gVal = (gVal - 128) * c + 128;
+          bVal = (bVal - 128) * c + 128;
+
+          // Clamp
+          r = Math.min(255, Math.max(0, r));
+          gVal = Math.min(255, Math.max(0, gVal));
+          bVal = Math.min(255, Math.max(0, bVal));
+
+          // Apply Grayscale
+          // Lerp between color and luminance
+          // Rec. 601 luma
+          const luma = 0.299 * r + 0.587 * gVal + 0.114 * bVal;
+          r = r * (1 - g) + luma * g;
+          gVal = gVal * (1 - g) + luma * g;
+          bVal = bVal * (1 - g) + luma * g;
+
+           // Apply Saturation
+           // Luminance for saturation
+           const lu = 0.299 * r + 0.587 * gVal + 0.114 * bVal; // Rec 601
+           // Or Rec 709: 0.2126 r + 0.7152 g + 0.0722 b
+           // CSS filters spec uses specific weights.
+           // Matrix for saturate:
+           // R' = (0.213 + 0.787s)R + (0.715 - 0.715s)G + (0.072 - 0.072s)B
+           // etc..
+           // Simplified lerp approach:
+           r = lu + (r - lu) * s;
+           gVal = lu + (gVal - lu) * s;
+           bVal = lu + (bVal - lu) * s;
+
+          data[i] = r;
+          data[i + 1] = gVal;
+          data[i + 2] = bVal;
+      }
   };
 
   /**

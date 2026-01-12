@@ -1,76 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-/**
- * Parameters for the usePhotoEditor hook.
- */
 interface UsePhotoEditorParams {
-  /**
-   * The image file to be edited.
-   */
   file?: File;
-
-  /**
-   * Initial brightness level (default: 100).
-   */
   defaultBrightness?: number;
-
-  /**
-   * Initial contrast level (default: 100).
-   */
   defaultContrast?: number;
-
-  /**
-   * Initial saturation level (default: 100).
-   */
   defaultSaturate?: number;
-
-  /**
-   * Initial grayscale level (default: 0).
-   */
   defaultGrayscale?: number;
-
-  /**
-   * Flip the image horizontally (default: false).
-   */
   defaultFlipHorizontal?: boolean;
-
-  /**
-   * Flip the image vertically (default: false).
-   */
   defaultFlipVertical?: boolean;
-
-  /**
-   * Initial zoom level (default: 1).
-   */
   defaultZoom?: number;
-
-  /**
-   * Initial rotation angle in degrees (default: 0).
-   */
   defaultRotate?: number;
-
-  /**
-   * Initial line color for drawing (default: '#000000').
-   */
   defaultLineColor?: string;
-
-  /**
-   * Initial line width for drawing (default: 2).
-   */
   defaultLineWidth?: number;
-
-  /**
-   * Initial mode for the canvas (default: 'pan').
-   */
   defaultMode?: 'pan' | 'draw';
 }
 
-/**
- * Custom hook for handling photo editing within a canvas.
- *
- * @param {UsePhotoEditorParams} params - Configuration parameters for the hook.
- * @returns {Object} - Returns state and functions for managing image editing.
- */
 export const usePhotoEditor = ({
   file,
   defaultBrightness = 100,
@@ -85,16 +29,9 @@ export const usePhotoEditor = ({
   defaultLineWidth = 2,
   defaultMode = 'pan',
 }: UsePhotoEditorParams) => {
-  // Ref to the canvas element where the image will be drawn.
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Create the image object using a ref
   const imgRef = useRef(new Image());
-
-  // State to hold the source of the image.
   const [imageSrc, setImageSrc] = useState<string>('');
-
-  // State variables for various image transformations.
   const [brightness, setBrightness] = useState(defaultBrightness);
   const [contrast, setContrast] = useState(defaultContrast);
   const [saturate, setSaturate] = useState(defaultSaturate);
@@ -103,38 +40,28 @@ export const usePhotoEditor = ({
   const [flipHorizontal, setFlipHorizontal] = useState(defaultFlipHorizontal);
   const [flipVertical, setFlipVertical] = useState(defaultFlipVertical);
   const [zoom, setZoom] = useState(defaultZoom);
-
-  // State variables for handling drag-and-drop panning.
   const [isDragging, setIsDragging] = useState(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
-
   const [mode, setMode] = useState<'draw' | 'pan'>(defaultMode);
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
-
-  // State variables for drawing on the canvas.
   const [lineColor, setLineColor] = useState<string>(defaultLineColor);
   const [lineWidth, setLineWidth] = useState<number>(defaultLineWidth);
-
   const drawingPathsRef = useRef<
     { path: { x: number; y: number }[]; color: string; width: number }[]
   >([]);
 
-  // Effect to update the image source when the file changes.
   useEffect(() => {
     if (file) {
       const fileSrc = URL.createObjectURL(file);
       setImageSrc(fileSrc);
-
-      // Clean up the object URL when the component unmounts or file changes.
       return () => {
         URL.revokeObjectURL(fileSrc);
       };
     }
   }, [file]);
 
-  // Effect to apply transformations and filters whenever relevant state changes.
   useEffect(() => {
     applyFilter();
   }, [
@@ -159,7 +86,6 @@ export const usePhotoEditor = ({
       context.lineWidth = width;
       context.lineCap = 'round';
       context.lineJoin = 'round';
-
       path.forEach((point, index) => {
         if (index === 0) {
           context.moveTo(point.x, point.y);
@@ -171,35 +97,24 @@ export const usePhotoEditor = ({
     });
   };
 
-  /**
-   * Applies the selected filters and transformations to the image on the canvas.
-   */
-  const applyFilter = () => {
+  const applyFilter = useCallback(() => {
     if (!imageSrc) return;
 
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
-
     const imgElement = imgRef.current;
     imgRef.current.src = imageSrc;
-    imgRef.current.onload = applyFilter;
 
-    imgElement.onload = () => {
+    const drawImage = () => {
       if (canvas && context) {
         const zoomedWidth = imgElement.width * zoom;
         const zoomedHeight = imgElement.height * zoom;
         const translateX = (imgElement.width - zoomedWidth) / 2;
         const translateY = (imgElement.height - zoomedHeight) / 2;
 
-        // Set canvas dimensions to match the image.
         canvas.width = imgElement.width;
         canvas.height = imgElement.height;
-
-        // Clear the canvas before drawing the updated image.
         context.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Apply filters and transformations.
-        context.filter = getFilterString();
         context.save();
 
         if (rotate) {
@@ -220,20 +135,112 @@ export const usePhotoEditor = ({
 
         context.translate(translateX + offsetX, translateY + offsetY);
         context.scale(zoom, zoom);
+        context.filter = getFilterString();
         context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
-
         context.restore();
+
+        const ua = navigator.userAgent.toLowerCase();
+        const isSafari =
+          (ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium') && !ua.includes('electron')) ||
+          (navigator.vendor && navigator.vendor.includes('Apple') && !ua.includes('chrome') && !ua.includes('chromium') && !ua.includes('electron'));
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceFallback = urlParams.get('forceFilterFallback') === 'true';
+
+        if (isSafari || forceFallback) {
+          context.save();
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          if (rotate) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            context.translate(centerX, centerY);
+            context.rotate((rotate * Math.PI) / 180);
+            context.translate(-centerX, -centerY);
+          }
+          if (flipHorizontal) {
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+          }
+          if (flipVertical) {
+            context.translate(0, canvas.height);
+            context.scale(1, -1);
+          }
+          context.translate(translateX + offsetX, translateY + offsetY);
+          context.scale(zoom, zoom);
+          context.filter = 'none';
+          context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+          context.restore();
+
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          applyFallbackFilters(imageData.data);
+          context.putImageData(imageData, 0, 0);
+        }
 
         context.filter = 'none';
         redrawDrawingPaths(context);
       }
     };
+
+    imgElement.onload = drawImage;
+    if (imgElement.complete) {
+      drawImage();
+    }
+
+  }, [
+    imageSrc,
+    rotate,
+    flipHorizontal,
+    flipVertical,
+    zoom,
+    brightness,
+    contrast,
+    saturate,
+    grayscale,
+    offsetX,
+    offsetY,
+    lineWidth,
+    lineColor,
+  ]);
+
+  const applyFallbackFilters = (data: Uint8ClampedArray) => {
+    const b = brightness / 100;
+    const c = contrast / 100;
+    const s = saturate / 100;
+    const g = grayscale / 100;
+
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i];
+      let gVal = data[i + 1];
+      let bVal = data[i + 2];
+
+      r *= b;
+      gVal *= b;
+      bVal *= b;
+
+      r = (r - 128) * c + 128;
+      gVal = (gVal - 128) * c + 128;
+      bVal = (bVal - 128) * c + 128;
+
+      r = Math.min(255, Math.max(0, r));
+      gVal = Math.min(255, Math.max(0, gVal));
+      bVal = Math.min(255, Math.max(0, bVal));
+
+      const luma = 0.299 * r + 0.587 * gVal + 0.114 * bVal;
+      r = r * (1 - g) + luma * g;
+      gVal = gVal * (1 - g) + luma * g;
+      bVal = bVal * (1 - g) + luma * g;
+
+      const lu = 0.299 * r + 0.587 * gVal + 0.114 * bVal;
+      r = lu + (r - lu) * s;
+      gVal = lu + (gVal - lu) * s;
+      bVal = lu + (bVal - lu) * s;
+
+      data[i] = r;
+      data[i + 1] = gVal;
+      data[i + 2] = bVal;
+    }
   };
 
-  /**
-   * Generates a file from the canvas content.
-   * @returns {Promise<File | null>} A promise that resolves with the edited file or null if the canvas is not available.
-   */
   const generateEditedFile = (): Promise<File | null> => {
     return new Promise((resolve) => {
       const canvas = canvasRef.current;
@@ -277,32 +284,18 @@ export const usePhotoEditor = ({
     }
   };
 
-  /**
-   * Generates a string representing the current filter settings.
-   *
-   * @returns {string} - A CSS filter string.
-   */
   const getFilterString = (): string => {
     return `brightness(${brightness}%) contrast(${contrast}%) grayscale(${grayscale}%) saturate(${saturate}%)`;
   };
 
-  /**
-   * Handles the zoom-in action.
-   */
   const handleZoomIn = () => {
     setZoom((prevZoom) => prevZoom + 0.1);
   };
 
-  /**
-   * Handles the zoom-out action.
-   */
   const handleZoomOut = () => {
     setZoom((prevZoom) => Math.max(prevZoom - 0.1, 0.1));
   };
 
-  /**
-   * Handles the pointer down event for initiating drawing or drag-and-drop panning.
-   */
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (mode === 'draw') {
       const canvas = canvasRef.current;
@@ -324,9 +317,6 @@ export const usePhotoEditor = ({
     }
   };
 
-  /**
-   * Handles the pointer move event for updating the drawing path or panning the image.
-   */
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (mode === 'draw' && drawStart) {
       const canvas = canvasRef.current;
@@ -368,17 +358,11 @@ export const usePhotoEditor = ({
     }
   };
 
-  /**
-   * Handles the pointer up event for ending the drawing or panning action.
-   */
   const handlePointerUp = () => {
     setIsDragging(false);
     setDrawStart(null);
   };
 
-  /**
-   * Handles the wheel event for zooming in and out.
-   */
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
     if (event.deltaY < 0) {
       handleZoomIn();
@@ -387,9 +371,6 @@ export const usePhotoEditor = ({
     }
   };
 
-  /**
-   * Resets the filters and styles to its original state with the default settings.
-   */
   const resetFilters = () => {
     setBrightness(defaultBrightness);
     setContrast(defaultContrast);
@@ -410,91 +391,48 @@ export const usePhotoEditor = ({
     applyFilter();
   };
 
-  // Expose the necessary state and handlers for external use.
   return {
-    /** Reference to the canvas element. */
     canvasRef,
-    /** Source URL of the image being edited. */
     imageSrc,
-    /** Current brightness level. */
     brightness,
-    /** Current contrast level. */
     contrast,
-    /** Current saturation level. */
     saturate,
-    /** Current grayscale level. */
     grayscale,
-    /** Current rotation angle in degrees. */
     rotate,
-    /** Flag indicating if the image is flipped horizontally. */
     flipHorizontal,
-    /** Flag indicating if the image is flipped vertically. */
     flipVertical,
-    /** Current zoom level. */
     zoom,
-    /** Flag indicating if the image is being dragged. */
     isDragging,
-    /** Starting coordinates for panning. */
     panStart,
-    /** Current horizontal offset for panning. */
     offsetX,
-    /** Current vertical offset for panning. */
     offsetY,
-    /** Current mode ('pan' or 'draw') */
     mode,
-    /** Current line color. */
     lineColor,
-    /** Current line width. */
     lineWidth,
-    /** Function to set the brightness level. */
     setBrightness,
-    /** Function to set the contrast level. */
     setContrast,
-    /** Function to set the saturation level. */
     setSaturate,
-    /** Function to set the grayscale level. */
     setGrayscale,
-    /** Function to set the rotation angle. */
     setRotate,
-    /** Function to set the horizontal flip state. */
     setFlipHorizontal,
-    /** Function to set the vertical flip state. */
     setFlipVertical,
-    /** Function to set the zoom level. */
     setZoom,
-    /** Function to set the dragging state. */
     setIsDragging,
-    /** Function to set the starting coordinates for panning. */
     setPanStart,
-    /** Function to set the horizontal offset for panning. */
     setOffsetX,
-    /** Function to set the vertical offset for panning. */
     setOffsetY,
-    /** Function to zoom in. */
     handleZoomIn,
-    /** Function to zoom out. */
     handleZoomOut,
-    /** Function to handle pointer down events. */
     handlePointerDown,
-    /** Function to handle pointer up events. */
     handlePointerUp,
-    /** Function to handle pointer move events. */
     handlePointerMove,
-    /** Function to handle wheel events for zooming. */
     handleWheel,
-    /** Function to download the edited image. */
     downloadImage,
-    /** Function to generate the edited image file. */
     generateEditedFile,
-    /** Function to reset filters and styles to default. */
     resetFilters,
-    /** Function to apply filters and transformations. */
     applyFilter,
-    /** Function to set the mode. */
     setMode,
-    /** Function to set the line color. */
     setLineColor,
-    /** Function to set the line width. */
     setLineWidth,
   };
 };

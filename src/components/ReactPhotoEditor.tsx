@@ -50,11 +50,9 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
     grayscale,
     setGrayscale,
     rotate,
-    setRotate,
-    flipHorizontal,
-    setFlipHorizontal,
-    flipVertical,
-    setFlipVertical,
+    handleRotate,
+    handleFlipHorizontal,
+    handleFlipVertical,
     mode,
     setMode,
     setLineColor,
@@ -78,7 +76,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
   }, [open]);
   const handleInputChange = (
     event: ChangeEvent<HTMLInputElement>,
-    setValue: React.Dispatch<React.SetStateAction<number>>,
+    setValue: React.Dispatch<React.SetStateAction<number>> | ((value: number) => void),
     min: number,
     max: number
   ) => {
@@ -92,7 +90,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
     {
       name: labels.rotate,
       value: rotate,
-      setValue: setRotate,
+      setValue: handleRotate,
       min: -180,
       max: 180,
       type: 'range',
@@ -201,6 +199,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
                       height: canvasHeight ?? 'auto',
                       maxHeight: maxCanvasHeight ?? '22rem',
                       maxWidth: maxCanvasWidth ?? '36rem',
+                      touchAction: 'none',
                     }}
                     className={`rpe-canvas rpe-touch-none rpe-border dark:rpe-border-gray-700 rpe-object-fill rpe-mx-auto 
 											${
@@ -301,7 +300,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
                         <div className='rpe-inline-block' data-testid='flip-btns'>
                           <button
                             className='rpe-mx-1 focus:rpe-ring-2 focus:rpe-ring-gray-300 dark:focus:rpe-ring-gray-700 rpe-rounded-md rpe-p-1'
-                            onClick={() => setFlipHorizontal(!flipHorizontal)}
+                            onClick={() => handleFlipHorizontal()}
                             type='button'
                             title={labels.flipHorizontal}
                             aria-label={labels.flipHorizontal}
@@ -328,7 +327,7 @@ export const ReactPhotoEditor: React.FC<ReactPhotoEditorProps> = ({
                           </button>
                           <button
                             className='rpe-mx-1 focus:rpe-ring-2 focus:rpe-ring-gray-300 dark:focus:rpe-ring-gray-700 rpe-rounded-md rpe-p-1'
-                            onClick={() => setFlipVertical(!flipVertical)}
+                            onClick={() => handleFlipVertical()}
                             type='button'
                             title={labels.flipVertical}
                             aria-label={labels.flipVertical}

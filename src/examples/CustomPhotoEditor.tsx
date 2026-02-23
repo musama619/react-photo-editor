@@ -22,13 +22,13 @@ const CustomPhotoEditor = () => {
     grayscale,
     setGrayscale,
     rotate,
-    setRotate,
+    handleRotate,
     flipHorizontal,
-    setFlipHorizontal,
+    handleFlipHorizontal,
     flipVertical,
-    setFlipVertical,
+    handleFlipVertical,
     zoom,
-    setZoom,
+    handleZoom,
     mode,
     setMode,
     setLineColor,
@@ -117,7 +117,7 @@ const CustomPhotoEditor = () => {
             min='0'
             max='360'
             value={rotate}
-            onChange={(e) => setRotate(Number(e.target.value))}
+            onChange={(e) => handleRotate(Number(e.target.value))}
           />
         </div>
 
@@ -129,7 +129,9 @@ const CustomPhotoEditor = () => {
             max='3'
             step='0.1'
             value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
+            onChange={(e) =>
+              handleZoom(Number(e.target.value) - zoom)
+            }
           />
         </div>
 
@@ -138,7 +140,7 @@ const CustomPhotoEditor = () => {
             <input
               type='checkbox'
               checked={flipHorizontal}
-              onChange={(e) => setFlipHorizontal(e.target.checked)}
+              onChange={() => handleFlipHorizontal()}
             />
             Flip Horizontal
           </label>
@@ -146,11 +148,7 @@ const CustomPhotoEditor = () => {
 
         <div>
           <label>
-            <input
-              type='checkbox'
-              checked={flipVertical}
-              onChange={(e) => setFlipVertical(e.target.checked)}
-            />
+            <input type='checkbox' checked={flipVertical} onChange={() => handleFlipVertical()} />
             Flip Vertical
           </label>
         </div>

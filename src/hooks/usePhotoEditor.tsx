@@ -206,8 +206,59 @@ export const usePhotoEditor = ({
   const applyFilter = () => {
     if (!imageSrc) return;
 
-    const context = canvasRef.current?.getContext('2d');
-    if (context == null) return;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+
+    const imgElement = imgRef.current;
+    imgRef.current.src = imageSrc;
+    imgRef.current.onload = applyFilter;
+
+    imgElement.onload = () => {
+      if (canvas && context) {
+        const zoomedWidth = imgElement.width * zoom;
+        const zoomedHeight = imgElement.height * zoom;
+        const translateX = (imgElement.width - zoomedWidth) / 2;
+        const translateY = (imgElement.height - zoomedHeight) / 2;
+
+        // Set canvas dimensions to match the image.
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+
+        // Clear the canvas before drawing the updated image.
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Apply filters and transformations.
+        context.filter = getFilterString();
+        context.save();
+
+        if (rotate) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          context.translate(centerX, centerY);
+          context.rotate((rotate * Math.PI) / 180);
+          context.translate(-centerX, -centerY);
+        }
+        if (flipHorizontal) {
+          context.translate(canvas.width, 0);
+          context.scale(-1, 1);
+        }
+        if (flipVertical) {
+          context.translate(0, canvas.height);
+          context.scale(1, -1);
+        }
+
+        const rotateAngle = (rotate * Math.PI) / 180;
+
+        context.translate(
+          translateX +
+            offsetX * Math.cos(rotateAngle) +
+            offsetY * Math.sin(rotateAngle),
+          translateY +
+            -offsetX * Math.sin(rotateAngle) +
+            offsetY * Math.cos(rotateAngle)
+        );
+        context.scale(zoom, zoom);
+        context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
 
     // Apply filters and transformations.
     context.filter = getFilterString();
